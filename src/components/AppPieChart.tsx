@@ -2,7 +2,6 @@
 
 import { Label, Pie, PieChart } from "recharts";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
-import { Card } from "./ui/card";
 import { TrendingUp } from "lucide-react";
 
 const chartData = [
