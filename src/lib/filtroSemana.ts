@@ -1,4 +1,4 @@
-import { getISOWeek, getISOWeekYear } from "date-fns";
+import { getISOWeek, getISOWeekYear, subWeeks } from "date-fns";
 
 function parseData(raw: string): Date | null {
   if (!raw) return null;
@@ -22,36 +22,58 @@ function parseData(raw: string): Date | null {
 }
 
 export function filtrarSemanaSimulada(registros: any[], dataRef: Date) {
-  const semanaAtual = getISOWeek(dataRef);
-  const anoAtual = getISOWeekYear(dataRef);
+  let tentativa = 0;
+  let dados: { descricao: string; entradas: number; saidas: number }[] = [];
+  let semanaEncontrada: number | null = null;
+  let anoEncontrado: number | null = null;
 
-  // 1. Filtrar registros pela semana/ano da data simulada
-  const filtrados = registros.filter((reg, idx) => {
-    const data = parseData(reg["R.S. In"]);
-    if (!data) return false;
+  // limite inferior: não voltar antes de 2018
+  const limiteInferior = new Date("2018-01-01");
 
-    const semana = getISOWeek(data);
-    const ano = getISOWeekYear(data);
-    const passou = semana === semanaAtual && ano === anoAtual;
+  while (tentativa < 52 && dataRef >= limiteInferior && dados.length === 0) {
+    const semanaAtual = getISOWeek(dataRef);
+    const anoAtual = getISOWeekYear(dataRef);
 
-    if (passou) {
-      console.log("Chaves disponíveis no registro:", Object.keys(reg));
-      console.log("Registro bruto:", reg);
+    const agrupados: Record<string, { entradas: number; saidas: number }> = {};
+
+    registros.forEach((reg) => {
+      const desc = reg["Descrição"] || reg["Descri��o"] || "N/A";
+
+      // Entrada
+      const dataIn = parseData(reg["R.S. In"]);
+      if (dataIn) {
+        if (getISOWeek(dataIn) === semanaAtual && getISOWeekYear(dataIn) === anoAtual) {
+          if (!agrupados[desc]) agrupados[desc] = { entradas: 0, saidas: 0 };
+          agrupados[desc].entradas++;
+        }
+      }
+
+      // Saída
+      const dataOut = parseData(reg["R.S. Out"]);
+      if (dataOut) {
+        if (getISOWeek(dataOut) === semanaAtual && getISOWeekYear(dataOut) === anoAtual) {
+          if (!agrupados[desc]) agrupados[desc] = { entradas: 0, saidas: 0 };
+          agrupados[desc].saidas++;
+        }
+      }
+    });
+
+    dados = Object.entries(agrupados).map(([descricao, valores]) => ({
+      descricao,
+      entradas: valores.entradas,
+      saidas: valores.saidas,
+    }));
+
+    if (dados.length > 0) {
+      semanaEncontrada = semanaAtual;
+      anoEncontrado = anoAtual;
+      break;
     }
 
-    return passou;
-  });
+    // não achou nada → volta 1 semana
+    dataRef = subWeeks(dataRef, 1);
+    tentativa++;
+  }
 
-  // 2. Agrupar por descrição e contar quantos existem
-  const agrupados = filtrados.reduce((acc, reg) => {
-  const desc = reg["Descrição"] || reg["Descri��o"] || "N/A";
-  acc[desc] = (acc[desc] || 0) + 1;
-  return acc;
-}, {} as Record<string, number>);
-
-  // 3. Transformar em array para o gráfico
-  return Object.entries(agrupados).map(([descricao, quantidade]) => ({
-    descricao,
-    quantidade
-  }));
+  return { dados, semanaEncontrada, anoEncontrado };
 }
