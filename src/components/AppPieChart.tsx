@@ -1,6 +1,6 @@
 "use client";
 
-import { Label, Pie, PieChart } from "recharts";
+import { Label, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 import { TrendingUp } from "lucide-react";
 
@@ -47,6 +47,8 @@ const AppPieChart = () => {
         
         <div className="flex flex-col gap-4 items-center">
             <h1 className="text-lg font-medium mb-6">Browser Usado</h1>
+            <div className="flex-1 w-full h-full">
+            <ResponsiveContainer width="100%" height="100%">
             <ChartContainer
                 config={chartConfig}
                 className="min-h-[200px] w-full">
@@ -95,6 +97,8 @@ const AppPieChart = () => {
             </Pie>
           </PieChart>
             </ChartContainer>
+            </ResponsiveContainer>
+            </div>
            
       <div className="mt-4 flex flex-col gap-2 items-center">
         <div className="flex items-center gap-2 leading-none font-medium">

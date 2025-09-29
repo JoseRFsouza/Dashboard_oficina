@@ -27,27 +27,37 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-  const cookieStore = await cookies()
-  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   return (
-  <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex`}>
-        <ThemeProvider 
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange>
-             <SidebarProvider defaultOpen={defaultOpen}>
-            
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex h-screen`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SidebarProvider defaultOpen={defaultOpen}>
+            {/* Sidebar fixa à esquerda */}
             <AppSideBar />
-        <main className="w-full">
-          <NavBar />
-          <div className="px-4">{children} </div>
-        </main>
-         </SidebarProvider>
+
+            {/* Main content */}
+            <main className="flex-1 flex flex-col h-screen overflow-hidden">
+              {/* NavBar fixo, mas deslocado para não cobrir a sidebar */}
+              <div className="fixed top-0 right-0 z-50 ml-[var(--sidebar-width,14rem)] w-[calc(100%-var(--sidebar-width,14rem))]">
+                <NavBar />
+              </div>
+
+              {/* Conteúdo compensado pela altura do NavBar */}
+              <div className="flex-1 pt-16 px-4 overflow-hidden">
+                {children}
+              </div>
+            </main>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>

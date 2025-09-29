@@ -21,6 +21,9 @@ function parseData(raw: string): Date | null {
   return isNaN(data.getTime()) ? null : data;
 }
 
+
+import { enUS} from "date-fns/locale"; // escolha o idioma
+
 export function calcularTatMensal(registros: any[], dataRef: Date) {
   // mês anterior à semana de referência
   let mesBase = subMonths(dataRef, 1);
@@ -42,7 +45,8 @@ export function calcularTatMensal(registros: any[], dataRef: Date) {
       const tatDias =
         (dataOut.getTime() - dataIn.getTime()) / (1000 * 60 * 60 * 24);
 
-      const chave = format(dataOut, "MM/yyyy");
+      // 🔑 use sempre o mesmo formato
+      const chave = format(dataOut, "MMM/yy", { locale: enUS }); 
       if (!agrupados[chave]) agrupados[chave] = [];
       agrupados[chave].push(tatDias);
     }
@@ -50,7 +54,7 @@ export function calcularTatMensal(registros: any[], dataRef: Date) {
 
   // calcular médias
   return meses.map((m) => {
-    const chave = format(m, "MM/yyyy");
+    const chave = format(m, "MMM/yy", { locale: enUS }); // mesmo formato aqui
     const valores = agrupados[chave] || [];
     const media =
       valores.length > 0

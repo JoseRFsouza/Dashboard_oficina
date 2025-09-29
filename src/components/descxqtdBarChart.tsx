@@ -76,7 +76,7 @@ export default function DescXQtdBarChart() {
         <h3 className="text-lg font-semibold">{titulo}</h3>
       </div>
 
-      <div className="min-h-[700]">
+      <div className="flex-1 w-full h-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={dados}>
             <XAxis

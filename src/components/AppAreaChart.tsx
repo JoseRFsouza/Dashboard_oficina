@@ -1,6 +1,6 @@
 "use client";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
-import { Area,CartesianGrid, XAxis, YAxis, AreaChart } from "recharts";
+import { Area,CartesianGrid, XAxis, YAxis, AreaChart, ResponsiveContainer } from "recharts";
 
 const chartConfig = {
   desktop: {
@@ -28,9 +28,11 @@ const chartData = [
 const AppAreaChart = () => {
 return (  
 
-    <div className="">
+    <div className="w-full h-[300px]">
      <h1 className="text-lg font-medium mb-6">RECEITAS X DISPESAS</h1>   
-     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+     <div className="">  
+      <ResponsiveContainer width="100%" height="100%">
+     <ChartContainer config={chartConfig} className="min-h-[200px]">
       <AreaChart accessibilityLayer
             data={chartData}
             margin={{
@@ -70,7 +72,8 @@ return (
             />
       </AreaChart>
     </ChartContainer>
-    
+    </ResponsiveContainer>
+            </div>
      </div>
 
 )
