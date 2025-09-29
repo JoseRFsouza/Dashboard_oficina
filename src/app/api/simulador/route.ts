@@ -1,3 +1,5 @@
+
+// src/app/api/simulador/route.ts
 import { NextResponse } from "next/server";
 import { getDataSimulada } from "@/lib/simuladorData";
 

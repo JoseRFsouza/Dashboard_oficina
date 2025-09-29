@@ -15,6 +15,7 @@ import { useCSV } from "@/lib/useCSV";
 import { filtrarSemanaSimulada } from "@/lib/filtroSemana";
 import { useTheme } from "next-themes";
 import { getISOWeek } from "date-fns";
+import { gerarMapaDescricao } from "@/lib/mapaDescricao";
 
 export default function DescXQtdBarChart() {
   const registros = useCSV();
@@ -23,6 +24,7 @@ export default function DescXQtdBarChart() {
   const [semana, setSemana] = useState<number | null>(null);
   const [ano, setAno] = useState<number | null>(null);
   const { theme } = useTheme();
+  const mapaCores = gerarMapaDescricao(registros);
 
   useEffect(() => {
     async function carregarDados() {
@@ -76,7 +78,7 @@ export default function DescXQtdBarChart() {
         <h3 className="text-lg font-semibold">{titulo}</h3>
       </div>
 
-      <div className="flex-1 w-full h-full">
+      <div className="w-full h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={dados}>
             <XAxis
@@ -120,21 +122,21 @@ export default function DescXQtdBarChart() {
               }}
             />
             <Legend />
-            {descricoes.map((desc, i) => (
-              <Bar key={desc} dataKey={desc} fill={cores[i % cores.length]} name={desc}>
-                <LabelList
-                  dataKey={desc}
-                  position="top"
-                  formatter={(value: number) => (value === 0 ? "" : value)}
-                  style={{
-                    fontSize: 18,
-                    fontWeight: "bold",
-                    fill: labelColor,
-                    textShadow: "0 0 4px rgba(0,0,0,0.6)",
-                  }}
-                />
-              </Bar>
-            ))}
+            {descricoes.map((desc) => (
+            <Bar key={desc} dataKey={desc} fill={mapaCores[desc]} name={desc}>
+              <LabelList
+                dataKey={desc}
+                position="top"
+                formatter={(value: number) => (value === 0 ? "" : value)}
+                style={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  fill: labelColor,
+                  textShadow: "0 0 4px rgba(0,0,0,0.6)",
+                }}
+              />
+            </Bar>
+          ))}
           </BarChart>
         </ResponsiveContainer>
       </div>

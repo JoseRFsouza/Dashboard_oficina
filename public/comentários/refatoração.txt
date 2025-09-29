@@ -1,0 +1,4 @@
+// TODO: Refatorar este componente separando:
+// - lógica de parsing para src/lib/csvParser.ts
+// - persistência para src/hooks/useCsvPersistence.ts
+// - UI para src/components/ui/CsvUploaderUI.tsx

@@ -46,14 +46,14 @@ export default async function RootLayout({
             <AppSideBar />
 
             {/* Main content */}
-            <main className="flex-1 flex flex-col h-screen overflow-hidden">
+            <main className="flex-1 flex flex-col h-screen overflow-auto">
               {/* NavBar fixo, mas deslocado para não cobrir a sidebar */}
               <div className="fixed top-0 right-0 z-50 ml-[var(--sidebar-width,14rem)] w-[calc(100%-var(--sidebar-width,14rem))]">
                 <NavBar />
               </div>
 
               {/* Conteúdo compensado pela altura do NavBar */}
-              <div className="flex-1 pt-16 px-4 overflow-hidden">
+              <div className="flex-1 pt-16 px-4 overflow-auto">
                 {children}
               </div>
             </main>
