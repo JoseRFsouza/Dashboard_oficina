@@ -13,17 +13,13 @@ import {
 import { useCSV } from "@/lib/useCSV";
 import { useTheme } from "next-themes";
 import { calcularSegvooMensalPorDescricao } from "@/lib/filtroHistoricoSegVoo";
-import { gerarMapaDescricao } from "@/lib/mapaDescricao";
 
 export default function AppAreaChartHistorico() {
   const registros = useCSV();
   const [dataRef, setDataRef] = useState<Date>(new Date());
   const [dados, setDados] = useState<any[]>([]);
-  const [descricoes, setDescricoes] = useState<string[]>([]);
   const { theme } = useTheme();
-  const mapaCores = gerarMapaDescricao(registros);
 
-  // Busca a data simulada uma única vez
   useEffect(() => {
     async function buscarDataSimulada() {
       try {
@@ -38,19 +34,20 @@ export default function AppAreaChartHistorico() {
     buscarDataSimulada();
   }, []);
 
-  // Recalcula os dados sempre que registros ou dataRef mudarem
   useEffect(() => {
     if (registros.length > 0 && dataRef) {
       const resultado = calcularSegvooMensalPorDescricao(registros, dataRef);
-      setDados(resultado);
 
-      const todasDescricoes = new Set<string>();
-      resultado.forEach((linha) => {
+      // consolida todas as descrições em um único total
+      const consolidados = resultado.map((linha) => {
+        let soma = 0;
         Object.keys(linha).forEach((key) => {
-          if (key !== "mes") todasDescricoes.add(key);
+          if (key !== "mes") soma += linha[key];
         });
+        return { mes: linha.mes, total: soma };
       });
-      setDescricoes(Array.from(todasDescricoes));
+
+      setDados(consolidados);
     }
   }, [registros, dataRef]);
 
@@ -63,7 +60,7 @@ export default function AppAreaChartHistorico() {
       </h3>
       <div className="w-full h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={dados} stackOffset="none">
+          <AreaChart data={dados}>
             <XAxis
               dataKey="mes"
               interval={0}
@@ -80,16 +77,12 @@ export default function AppAreaChartHistorico() {
             />
             <Tooltip />
             <Legend />
-            {descricoes.map((desc) => (
-              <Area
-                key={desc}
-                type="linear"
-                dataKey={desc}
-                stackId="1"
-                stroke={mapaCores[desc]}
-                fill={mapaCores[desc]}
-              />
-            ))}
+            <Area
+              type="monotone"
+              dataKey="total"
+              stroke="#0ea5e9"
+              fill="#0ea5e9"
+            />
           </AreaChart>
         </ResponsiveContainer>
       </div>

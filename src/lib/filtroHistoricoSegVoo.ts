@@ -26,11 +26,11 @@ function parseData(raw: string): Date | null {
 export function calcularSegvooMensalPorDescricao(registros: any[], dataRef: Date) {
   const inicio = subMonths(dataRef, 12);
   const meses: Date[] = [];
-
   for (let i = 11; i >= 0; i--) {
     meses.push(subMonths(dataRef, i));
   }
-
+  console.log (registros);
+  
   const agrupados: Record<string, Record<string, number>> = {};
 
   registros.forEach((reg) => {
