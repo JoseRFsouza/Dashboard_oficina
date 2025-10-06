@@ -11,29 +11,32 @@ import WeekNum from "@/components/weekNum";
 
 export default function Homepage() {
   return (
-    <div className="grid grid-cols-6 grid-rows-2 gap-4 h-screen">
+    <div className="flex flex-col gap-4 h-screen p-4">
 
-      <div className="bg-primary-foreground p-4 rounded-lg flex col-span1">
-        <WeekNum />
+      {/* Linha superior: 1fr 2fr 1fr */}
+      <div className="grid grid-cols-[1fr_2fr_1fr] gap-4">
+        <div className="bg-primary-foreground p-4 rounded-lg flex items-center justify-center">
+          <WeekNum />
+        </div>
+
+        <div className="bg-primary-foreground p-4 rounded-lg">
+          <DescXQtdPieChart />
+        </div>
+
+        <div className="bg-primary-foreground p-4 rounded-lg flex items-center justify-center">
+          <AppPieChart />
+        </div>
       </div>
 
-      <div className="bg-primary-foreground p-4 rounded-lg col-span-4">
-        <h2 className="text-lg font-semibold mb-2"></h2>
-        <DescXQtdPieChart />
-      </div>
+      {/* Linha inferior: 2 colunas iguais */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-primary-foreground p-4 rounded-lg">
+          <TatMensalChart />
+        </div>
 
-      <div className="bg-primary-foreground p-4 rounded-lg flex col-span-1">
-        <h2 className="text-lg font-semibold mb-2"></h2>
-        <AppPieChart />
-      </div>
-
-      <div className="bg-primary-foreground p-4 rounded-lg col-span-3">
-         <TatMensalChart />
-      </div>
-
-      <div className="bg-primary-foreground p-4 rounded-lg col-span-3">
-        <h2 className="text-lg font-semibold mb-2"></h2>
-        <AppAreaChartHistorico />
+        <div className="bg-primary-foreground p-4 rounded-lg">
+          <AppAreaChartHistorico />
+        </div>
       </div>
     </div>
   );

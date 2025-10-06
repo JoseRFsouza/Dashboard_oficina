@@ -42,13 +42,13 @@ export default function TatMensalChart() {
   const labelColor = theme === "dark" ? "#fff" : "#000";
 
   return (
-    <div className="w-full h-[400px]">
+    <div className="w-full h-[460px]">
       <h3 className="text-lg font-semibold mb-2">
         TAT Médio Mensal — Últimos 6 Meses
       </h3>
       <div className="flex-1 w-full h-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={dados}>
+          <BarChart data={dados} margin={{ bottom: 10 }}>
             <XAxis
               dataKey="mes"
               interval={0}
@@ -60,6 +60,7 @@ export default function TatMensalChart() {
               textAnchor="end"
             />
             <YAxis
+              domain={[0, 35]}
               tick={{ fontSize: 14, fontWeight: "bold", fill: labelColor }}
               axisLine={{ stroke: labelColor, strokeWidth: 2 }}   // linha do eixo Y
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
@@ -98,7 +99,9 @@ export default function TatMensalChart() {
               <LabelList
                 dataKey="tat"
                 position="top"
-                formatter={(value: number) => (value === 0 ? "" : value)}
+                formatter={(value: number) =>
+                  value === 0 ? "" : `${Math.round(value)} dias`
+                }
                 style={{
                   fontSize: 14,
                   fontWeight: "bold",

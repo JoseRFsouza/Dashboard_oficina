@@ -1,7 +1,6 @@
 import { subMonths, format } from "date-fns";
 import { enUS } from "date-fns/locale";
 
-
 function parseData(raw: string): Date | null {
   if (!raw) return null;
   const partes = raw.split("-");
@@ -23,31 +22,26 @@ function parseData(raw: string): Date | null {
   return isNaN(data.getTime()) ? null : data;
 }
 
-export function calcularSegvooMensalPorDescricao(registros: any[], dataRef: Date) {
+export function calcularSegvooMensalTotal(registros: any[], dataRef: Date) {
   const inicio = subMonths(dataRef, 12);
   const meses: Date[] = [];
   for (let i = 11; i >= 0; i--) {
     meses.push(subMonths(dataRef, i));
   }
-  console.log (registros);
-  
-  const agrupados: Record<string, Record<string, number>> = {};
+
+  const agrupados: Record<string, number> = {};
 
   registros.forEach((reg) => {
     const dataSegvoo = parseData(reg["SegVoo"]);
-    const descricao = (reg["Descrição"] || reg["Descri��o"] || "N/A").trim();
-
     if (dataSegvoo && dataSegvoo >= inicio && dataSegvoo <= dataRef) {
       const chave = format(dataSegvoo, "MMM/yy", { locale: enUS });
-      if (!agrupados[chave]) agrupados[chave] = {};
-      if (!agrupados[chave][descricao]) agrupados[chave][descricao] = 0;
-      agrupados[chave][descricao]++;
+      if (!agrupados[chave]) agrupados[chave] = 0;
+      agrupados[chave]++; // soma 1 ocorrência, independente da descrição
     }
   });
 
   return meses.map((m) => {
     const chave = format(m, "MMM/yy", { locale: enUS });
-    const descricoes = agrupados[chave] || {};
-    return { mes: chave, ...descricoes };
+    return { mes: chave, total: agrupados[chave] || 0 };
   });
 }

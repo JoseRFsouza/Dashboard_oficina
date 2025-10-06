@@ -121,7 +121,7 @@ export default function DescXQtdPieChart() {
   return (
     <div className="flex flex-col h-full justify-evenly">
       <h3 className="text-lg font-semibold mb-2">{titulo}</h3>
-      <div className={`flex-1 w-full flex ${temEntradas && temSaidas ? "flex-row gap-6" : "justify-center"}`}>
+      <div className={`flex-1 w-full flex ${temEntradas && temSaidas ? "flex-row" : "justify-evenly"}`}>
         {temEntradas && temSaidas ? (
           <>
             <div className="w-1/2">{renderDonut(entradas, "Entradas")}</div>

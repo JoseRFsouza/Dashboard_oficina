@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { useCSV } from "@/lib/useCSV";
 import { useTheme } from "next-themes";
-import { calcularSegvooMensalPorDescricao } from "@/lib/filtroHistoricoSegVoo";
+import { calcularSegvooMensalTotal } from "@/lib/filtroHistoricoSegVoo"; // ✅ agora importa a função nova
 
 export default function AppAreaChartHistorico() {
   const registros = useCSV();
@@ -20,6 +20,7 @@ export default function AppAreaChartHistorico() {
   const [dados, setDados] = useState<any[]>([]);
   const { theme } = useTheme();
 
+  // busca a data simulada
   useEffect(() => {
     async function buscarDataSimulada() {
       try {
@@ -34,20 +35,11 @@ export default function AppAreaChartHistorico() {
     buscarDataSimulada();
   }, []);
 
+  // recalcula os dados sempre que registros ou dataRef mudarem
   useEffect(() => {
     if (registros.length > 0 && dataRef) {
-      const resultado = calcularSegvooMensalPorDescricao(registros, dataRef);
-
-      // consolida todas as descrições em um único total
-      const consolidados = resultado.map((linha) => {
-        let soma = 0;
-        Object.keys(linha).forEach((key) => {
-          if (key !== "mes") soma += linha[key];
-        });
-        return { mes: linha.mes, total: soma };
-      });
-
-      setDados(consolidados);
+      const resultado = calcularSegvooMensalTotal(registros, dataRef);
+      setDados(resultado);
     }
   }, [registros, dataRef]);
 
@@ -58,9 +50,15 @@ export default function AppAreaChartHistorico() {
       <h3 className="text-lg font-semibold mb-2">
         Histórico de SEGVOO — Últimos 12 Meses
       </h3>
-      <div className="w-full h-[400px]">
+      <div className="w-full h-[460px]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={dados}>
+          <AreaChart data={dados} margin={{ bottom: 10 }}>
+            <defs>
+              <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#facc15" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#92400e" stopOpacity={0.2}/>
+              </linearGradient>
+            </defs>
             <XAxis
               dataKey="mes"
               interval={0}
@@ -76,12 +74,12 @@ export default function AppAreaChartHistorico() {
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
             />
             <Tooltip />
-            <Legend />
+            
             <Area
               type="monotone"
               dataKey="total"
               stroke="#0ea5e9"
-              fill="#0ea5e9"
+              fill="url(#colorTotal)"   // ✅ aplica o degradê
             />
           </AreaChart>
         </ResponsiveContainer>
