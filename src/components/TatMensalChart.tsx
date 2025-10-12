@@ -46,14 +46,14 @@ export default function TatMensalChart() {
       <h3 className="text-lg font-semibold mb-2">
         TAT Médio Mensal — Últimos 6 Meses
       </h3>
-      <div className="flex-1 w-full h-full">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="items-justified-center w-full h-full">
+        <ResponsiveContainer width="100%" height={430}>
           <BarChart data={dados} margin={{ bottom: 10 }}>
             <XAxis
               dataKey="mes"
               interval={0}
               minTickGap={0}
-              tick={{ fontSize: 14, fontWeight: "bold", fill: labelColor }}
+              tick={{ fontSize: 14, fill: labelColor }}
               axisLine={{ stroke: labelColor, strokeWidth: 2 }}
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
               angle={-30}
@@ -61,17 +61,22 @@ export default function TatMensalChart() {
             />
             <YAxis
               domain={[0, 35]}
-              tick={{ fontSize: 14, fontWeight: "bold", fill: labelColor }}
+              tick={{ fontSize: 14, fill: labelColor }}
               axisLine={{ stroke: labelColor, strokeWidth: 2 }}   // linha do eixo Y
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
             />
             <Tooltip
-              cursor={{
-                fill:
-                  theme === "dark"
-                    ? "rgba(255,255,255,0.1)"
-                    : "rgba(0,0,0,0.05)",
-              }}
+              contentStyle={{
+              backgroundColor: theme === "dark" ? "#1f2937" : "#f9fafb", // fundo escuro ou claro
+              border: "1px solid #d1d5db", // borda cinza
+              borderRadius: "6px",
+              color: theme === "dark" ? "#ffffff" : "#111827", // cor do texto
+              
+            }}
+            labelStyle={{
+              color: theme === "dark" ? "#ffffff" : "#111827",
+              
+            }}
             />
 
             {/* Linha vermelha no Y=30 (limite contratual) */}

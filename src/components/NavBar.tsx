@@ -12,25 +12,31 @@ import {
 } from "./ui/dropdown-menu";
 
 import { useTheme } from "next-themes";
-import { SidebarTrigger } from "./ui/sidebar";
 import { Button } from "./ui/button";
+import CsvUploadDialog from "@/modals/uploader/csvUpload";
+
 
 const NavBar = () => {
-  const { theme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
 
   return (
-    <nav className="h-16 px-4 flex items-center justify-between">
+    <nav className="h-16 px-4 flex items-center justify-between bg-background border-b shadow-md">
       {/* LEFT */}
-      <div className="flex items-center gap-3">
-        {/* Botão de colapsar sidebar */}
-        <SidebarTrigger className="w-6 h-6 cursor-pointer" />
-      </div>
-
-        <div className="flex items-center gap-4">
-        <Link href="/" className="font-semibold text-base">
-          Dashboard
-        </Link>
       
+      
+        <div className="flex items-center gap-2">
+          <CsvUploadDialog/>
+          
+        </div>
+      
+
+      {/* RIGHT */}
+      <div className="flex items-center gap-4">
+        <Link href="/" className="font-semibold text-base">
+          DASHBOARD IFE REPAIR SHOP
+        </Link>
+         </div>
+         <div className="flex items-center gap-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">

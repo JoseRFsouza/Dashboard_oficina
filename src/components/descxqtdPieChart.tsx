@@ -7,13 +7,52 @@ import {
   Cell,
   ResponsiveContainer,
   Label,
+  LabelList,
 } from "recharts";
 import { useCSV } from "@/lib/useCSV";
 import { filtrarSemanaSimulada } from "@/lib/filtroSemana";
 import { useTheme } from "next-themes";
 import { getISOWeek } from "date-fns";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"; 
-// ajuste o import conforme onde você declarou esses wrappers
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart"; 
+
+
+// Nome padronizado a partir do entry (payload do Recharts)
+function formatSliceNameFromEntry(entry: any) {
+   return (String(entry?.payload?.name ?? entry?.name ?? ''));
+}
+
+// saneamento de valores
+const saneNumber = (v: any) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+
+// Se o seu ChartTooltipContent aceitar "valueFormatter", use o mesmo:
+export const tooltipValueFormatter = (
+  _value: number,
+  _name: string,
+  entry: any
+) => String(entry?.payload?.name ?? entry?.name ?? '');
+import type { TooltipProps } from 'recharts';
+
+const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const entry = payload[0];
+  const name  = formatSliceNameFromEntry(entry);
+  const value = saneNumber(entry.value);
+
+  return (
+    <div className="rounded-md border bg-popover px-2 py-1 text-xs text-popover-foreground shadow">
+      <div className="flex items-center gap-2">
+        {/* bolinha com a cor da fatia */}
+        <span
+          className="inline-block h-2 w-2 rounded-full"
+          style={{ background: entry?.color || entry?.payload?.fill || '#bbb' }}
+        />
+        <span className="font-medium">{name}</span>
+        <span className="opacity-70">— {value}</span>
+      </div>
+    </div>
+  );
+};
 
 export default function DescXQtdPieChart() {
   const registros = useCSV();
@@ -71,27 +110,57 @@ export default function DescXQtdPieChart() {
   const cores = ["#0ea5e9", "#f97316", "#22c55e", "#a855f7", "#ef4444", "#14b8a6"];
 
  const renderDonut = (data: any[], titulo: string) => {
-  const total = data.reduce((acc, curr) => acc + curr.value, 0);
+  const dataFiltrada = (data || [])
+  .map((d) => ({
+    ...d,
+    value: saneNumber(d.value),
+    name: typeof d.name === 'string' ? d.name.trim() : '',
+  }))
+  .filter((d) => d.value > 0 && d.name);
+
+  const total = dataFiltrada.reduce((acc, curr) => acc + curr.value, 0);
+  console.log("Dados filtrados:", dataFiltrada);
+
   return (
     <div className="flex flex-col items-center">
       <ResponsiveContainer width="100%" height={250}>
-        <ChartContainer config={{}} className="min-h-[250px] w-full">
+        {/* garantir que labels fora do arco não sejam cortados */}
+        <ChartContainer config={{}} className="min-h-[250px] w-full overflow-visible">
           <PieChart>
-            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+            {/* mantém seu tooltip atual, sem valueFormatter */}
+           < ChartTooltip cursor={false} content={<CustomTooltip />} />
+
             <Pie
-              data={data}
+              data={dataFiltrada}
               dataKey="value"
               nameKey="name"
               innerRadius={60}
               strokeWidth={5}
+              minAngle={4}
+              paddingAngle={1}
+              labelLine={true} // rótulos fora
             >
-              {data.map((_, i) => (
+              {dataFiltrada.map((_: any, i: number) => (
                 <Cell key={i} fill={cores[i % cores.length]} />
               ))}
-              {/* Label central: só o número */}
+
+              {/* LabelList: usa o mesmo texto que aparece no tooltip */}
+              <LabelList
+                dataKey="name"
+                position="outside"
+                style={{
+                  fill: 'currentColor',
+                  fontSize: 12,
+                  fontWeight: 500, // ou 400 para mais leve
+                  paintOrder: 'stroke',
+                  stroke: 'rgba(0,0,0,0.15)', // mais suave
+                  strokeWidth: 1, // bem mais leve
+                }}
+              />
+              {/* Centro: total */}
               <Label
                 content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                  if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
                     return (
                       <text
                         x={viewBox.cx}
@@ -104,13 +173,14 @@ export default function DescXQtdPieChart() {
                       </text>
                     );
                   }
+                  return null;
                 }}
               />
             </Pie>
           </PieChart>
         </ChartContainer>
       </ResponsiveContainer>
-      {/* Texto fora do donut */}
+
       <span className="mt-2 text-sm text-muted-foreground font-medium">
         {titulo}
       </span>
