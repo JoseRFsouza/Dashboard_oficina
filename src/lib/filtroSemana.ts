@@ -1,34 +1,36 @@
 import { getISOWeek, getISOWeekYear, subWeeks } from "date-fns";
+import { gerarMapaDescricao } from "@/lib/mapaDescricao";
+import { parseData } from "@/lib/filtroHistoricoSegVoo";
 
-function parseData(raw: string): Date | null {
-  if (!raw) return null;
-  const partes = raw.split("-");
-  if (partes.length < 3) return null;
+// Função auxiliar para normalizar a descrição
+function normalizarDescricao(reg: any): string {
+  const keys = Object.keys(reg);
 
-  const [dia, mesAbrev, ano] = partes;
-  const meses: Record<string, string> = {
-    jan: "01", fev: "02", feb: "02", mar: "03", abr: "04", apr: "04",
-    mai: "05", may: "05", jun: "06", jul: "07",
-    ago: "08", aug: "08", set: "09", sep: "09", out: "10", oct: "10",
-    nov: "11", dez: "12", dec: "12"
-  };
+  // procura por qualquer chave que contenha "descr" (sem acento, case-insensitive)
+  const key = keys.find((k) =>
+    k.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // remove acentos
+      .includes("descricao")
+  );
 
-  const mes = meses[mesAbrev.toLowerCase()];
-  if (!mes) return null;
-
-  const anoFull = ano.length === 2 ? "20" + ano : ano;
-  const data = new Date(`${anoFull}-${mes}-${dia}`);
-  return isNaN(data.getTime()) ? null : data;
+  if (key) {
+    return String(reg[key] ?? "").trim();
+  }
+  return "";
 }
 
 export function filtrarSemanaSimulada(registros: any[], dataRef: Date) {
   let tentativa = 0;
-  let dados: { descricao: string; entradas: number; saidas: number }[] = [];
+  let dados: { descricao: string; entradas: number; saidas: number; cor: string }[] = [];
   let semanaEncontrada: number | null = null;
   let anoEncontrado: number | null = null;
 
   // limite inferior: não voltar antes de 2018
   const limiteInferior = new Date("2018-01-01");
+
+  // gera o mapa de descrições → cores
+  const mapaDescricoes = gerarMapaDescricao(registros);
 
   while (tentativa < 52 && dataRef >= limiteInferior && dados.length === 0) {
     const semanaAtual = getISOWeek(dataRef);
@@ -37,7 +39,8 @@ export function filtrarSemanaSimulada(registros: any[], dataRef: Date) {
     const agrupados: Record<string, { entradas: number; saidas: number }> = {};
 
     registros.forEach((reg) => {
-      const desc = reg["Descrição"] || reg["Descri��o"] || "N/A";
+      const descRaw = normalizarDescricao(reg);
+      const desc = descRaw !== "" ? descRaw : "Sem descrição";
 
       // Entrada
       const dataIn = parseData(reg["R.S. In"]);
@@ -62,6 +65,7 @@ export function filtrarSemanaSimulada(registros: any[], dataRef: Date) {
       descricao,
       entradas: valores.entradas,
       saidas: valores.saidas,
+      cor: mapaDescricoes[descricao] ?? "#999", // pega cor do mapa ou fallback
     }));
 
     if (dados.length > 0) {

@@ -9,17 +9,22 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  ReferenceLine,
 } from "recharts";
 import { useCSV } from "@/lib/useCSV";
 import { useTheme } from "next-themes";
 import { calcularSegvooMensalTotal } from "@/lib/filtroHistoricoSegVoo";
-import { calcularMediaMensal, calcularVariacaoPercentual, gerarLegendaComVariação } from "@/lib/estatisticaSegVoo";
-
+import {
+  calcularMediaMensal,
+  calcularVariacaoPercentual,
+  gerarLegendaComVariação,
+} from "@/lib/estatisticaSegVoo";
 
 export default function AppAreaChartHistorico() {
   const registros = useCSV();
   const [dataRef, setDataRef] = useState<Date>(new Date());
   const [dados, setDados] = useState<any[]>([]);
+  const [picoHistorico, setPicoHistorico] = useState<number>(0);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -38,7 +43,24 @@ export default function AppAreaChartHistorico() {
 
   useEffect(() => {
     const resultado = calcularSegvooMensalTotal(registros, dataRef);
-    setDados(resultado);
+
+    // resultado pode ser um array direto, ou um objeto { dados, picoHistorico }
+    if (Array.isArray(resultado)) {
+      // quando a função retorna diretamente o array
+      setDados(resultado);
+      const maxVal = Math.max(
+        ...resultado.map((r: any) => Math.max(r.atual ?? 0, r.anterior ?? 0))
+      );
+      setPicoHistorico(maxVal);
+    } else if (resultado && Array.isArray((resultado as any).dados)) {
+      // quando a função retorna { dados, picoHistorico }
+      setDados((resultado as any).dados);
+      setPicoHistorico((resultado as any).picoHistorico ?? 0);
+    } else {
+      // fallback seguro
+      setDados([]);
+      setPicoHistorico(0);
+    }
   }, [registros, dataRef]);
 
   const labelColor = theme === "dark" ? "#fff" : "#000";
@@ -54,7 +76,7 @@ export default function AppAreaChartHistorico() {
   return (
     <div className="w-full h-auto">
       <h3 className="text-lg font-semibold mb-2">
-        Histórico de SEGVOO — Últimos 12 Meses
+        Return to service Certificates issued - last 12 months
       </h3>
 
       <div className="w-full h-[450px]">
@@ -70,29 +92,53 @@ export default function AppAreaChartHistorico() {
             <XAxis
               dataKey="mes"
               interval={0}
-              tick={{ fontSize: 14, fill: labelColor}}
-              axisLine={{ stroke: labelColor, strokeWidth: 2 }}   
+              tick={{ fontSize: 14, fill: labelColor }}
+              axisLine={{ stroke: labelColor, strokeWidth: 2 }}
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
             />
             <YAxis
               orientation="left"
-              tick={{ fontSize: 14, fill: labelColor}}
-              axisLine={{ stroke: labelColor, strokeWidth: 2 }}   
+              tickFormatter={(value) => Number(value).toLocaleString("pt-BR")}
+              tick={{ fontSize: 14, fill: labelColor }}
+              axisLine={{ stroke: labelColor, strokeWidth: 2 }}
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
+              allowDecimals={false}
+              domain={[
+                0,
+                (dataMax: number) => Math.ceil(Math.max(dataMax, picoHistorico) * 1.1)
+              ]}
+
             />
-            <Tooltip 
+            <Tooltip
               contentStyle={{
-              backgroundColor: theme === "dark" ? "#1f2937" : "#f9fafb", // fundo escuro ou claro
-              border: "1px solid #d1d5db", // borda cinza
-              borderRadius: "6px",
-              color: theme === "dark" ? "#ffffff" : "#111827", // cor do texto
-            
-            }}
-            labelStyle={{
-              color: theme === "dark" ? "#ffffff" : "#111827",
-            }}
+                backgroundColor: theme === "dark" ? "#1f2937" : "#f9fafb",
+                border: "1px solid #d1d5db",
+                borderRadius: "6px",
+                color: theme === "dark" ? "#ffffff" : "#111827",
+              }}
+              labelStyle={{
+                color: theme === "dark" ? "#ffffff" : "#111827",
+              }}
             />
             <Legend />
+
+            {/* 🔑 Linha do pico histórico */}
+            {picoHistorico > 0 && Number.isFinite(picoHistorico) && (
+              <ReferenceLine
+                y={picoHistorico}
+                stroke="green"
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                label={{
+                  value: `All the time releases count (${picoHistorico})`,
+                  position: "top",       // coloca o texto acima da linha
+                  offset: 8,             // dá um espaçozinho do traço
+                  fill: "lightgreen", // cor do texto
+                  fontSize: 12,
+                  fontWeight: "bold",
+                }}
+              />
+            )}
 
             <Area
               type="monotone"
@@ -114,7 +160,6 @@ export default function AppAreaChartHistorico() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-
-    
     </div>
-  );}
+  );
+}

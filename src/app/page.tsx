@@ -28,7 +28,7 @@ export default function Homepage() {
         
         <div className="p-0 rounded-lg">
           <DescReasonsByDescricaoCard
-            title="Top 3 — Motivos por Descrição"
+            title="Top 3 - Removal Reasons"
             intervalMs={3500}
             // Cenário geral: todas as falhas (excluindo NFF/UNSPECIFIED por padrão)
             // Se quiser focar, por exemplo:

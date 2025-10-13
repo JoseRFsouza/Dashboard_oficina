@@ -11,7 +11,7 @@ export default function CsvUploadDialog() {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
-        <button className="flex items-center gap-2 w-full px-3 py-2 rounded-md border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+        <button className="flex items-center gap-2 px-3 py-2 rounded-md border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 transition-colors">
           <Upload className="w-4 h-4" />
           <span>Upload CSV</span>
         </button>

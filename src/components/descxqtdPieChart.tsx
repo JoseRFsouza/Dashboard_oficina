@@ -94,11 +94,11 @@ export default function DescXQtdPieChart() {
     carregarDados();
   }, [registros]);
 
-  let titulo = "Movimentação Itens na Oficina";
+  let titulo = "Repair Shop Items In and Items Out";
   if (semana && ano) {
     const semanaAtual = getISOWeek(new Date());
     if (semana === semanaAtual) {
-      titulo += ` — Semana ${semana} de ${ano} (última semana com dados)`;
+      titulo += ` — Week ${semana} of ${ano} (Last week with data)`;
     }
   } else {
     titulo += " — Sem dados anteriores";

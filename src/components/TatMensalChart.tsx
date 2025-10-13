@@ -44,7 +44,7 @@ export default function TatMensalChart() {
   return (
     <div className="w-full h-[460px]">
       <h3 className="text-lg font-semibold mb-2">
-        TAT Médio Mensal — Últimos 6 Meses
+        Montly TurnArroundTime — Last 6 months (in days)
       </h3>
       <div className="items-justified-center w-full h-full">
         <ResponsiveContainer width="100%" height={430}>
@@ -56,14 +56,30 @@ export default function TatMensalChart() {
               tick={{ fontSize: 14, fill: labelColor }}
               axisLine={{ stroke: labelColor, strokeWidth: 2 }}
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
-              angle={-30}
+              angle={0}
               textAnchor="end"
             />
             <YAxis
-              domain={[0, 35]}
-              tick={{ fontSize: 14, fill: labelColor }}
-              axisLine={{ stroke: labelColor, strokeWidth: 2 }}   // linha do eixo Y
+              domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.1)]}
+              axisLine={{ stroke: labelColor, strokeWidth: 2 }}
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
+              tick={(props) => {
+                const { x, y, payload } = props;
+                const isHighlight = payload.value === 30; // só o 30
+                return (
+                  <text
+                    x={x}
+                    y={y}
+                    dy={4}
+                    textAnchor="end"
+                    fill={isHighlight ? "red" : labelColor}
+                    fontWeight={isHighlight ? "bold" : "normal"}
+                    fontSize={14}
+                  >
+                    {payload.value}
+                  </text>
+                );
+              }}
             />
             <Tooltip
               contentStyle={{
@@ -86,15 +102,15 @@ export default function TatMensalChart() {
               strokeWidth={2}
               strokeDasharray="4 4"
               label={{
-                value: "Limite Contratual (30 dias)",
-                position: "right",
-                fill: "red",
+                value: "",
+                position: "top",
+                fill: "orange",
                 fontSize: 12,
                 fontWeight: "bold",
               }}
             />
 
-            <Bar dataKey="tat" name="TAT Médio (dias)">
+            <Bar dataKey="tat" name="TAT (days)">
               {dados.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
@@ -105,7 +121,7 @@ export default function TatMensalChart() {
                 dataKey="tat"
                 position="top"
                 formatter={(value: number) =>
-                  value === 0 ? "" : `${Math.round(value)} dias`
+                  value === 0 ? "" : `${Math.round(value)} days`
                 }
                 style={{
                   fontSize: 14,

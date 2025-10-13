@@ -10,7 +10,7 @@ export type DescRankItem = {
 };
 
 export default function DescRankCarouselView({
-  title = 'Top 3 — Falhas por Descrição',
+  title = 'Top 3 — on wing failures found',
   items,
   intervalMs = 3500,
 }: {
@@ -43,7 +43,7 @@ export default function DescRankCarouselView({
 
         {/* Conteúdo vazio estável */}
         <div className="flex flex-col items-start gap-1">
-          <div className="text-sm text-muted-foreground">Sem dados para exibir</div>
+          <div className="text-sm text-muted-foreground">No data to show</div>
         </div>
 
         {/* Dots vazios (opcional) */}
@@ -78,7 +78,7 @@ export default function DescRankCarouselView({
           {active.descricao}
         </div>
         <div className="text-3xl font-extrabold text-orange-600 border border-gray-900">{active.count}</div>
-        <div className="text-xs text-muted-foreground">ocorrências</div>
+        <div className="text-xs text-muted-foreground">issues</div>
       </div>
 
       <div className="mt-3 flex gap-1" role="tablist" aria-label="Navegação">

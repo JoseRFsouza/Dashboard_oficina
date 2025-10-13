@@ -37,6 +37,8 @@ export function calcularSegvooMensalTotal(registros: any[], dataRef: Date) {
   const atual: Record<string, number> = {};
   const anterior: Record<string, number> = {};
 
+  let picoHistorico = 0;
+
   registros.forEach((reg) => {
     
     const dataSegvoo = parseData(reg["SegVoo"]);
@@ -51,12 +53,16 @@ export function calcularSegvooMensalTotal(registros: any[], dataRef: Date) {
     if (dataSegvoo >= inicioAnterior && dataSegvoo <= fimAnterior) {
       anterior[mes] = (anterior[mes] || 0) + 1;
     }
- 
+     picoHistorico++;
   });
 
-  return meses.map((mes) => ({
+  const dados = meses.map((mes) => ({
     mes,
     atual: atual[mes] || 0,
     anterior: anterior[mes] || 0,
   }));
+
+  // devolve também o pico histórico
+  return { dados, picoHistorico: Math.max(...dados.map(d => Math.max(d.atual, d.anterior))) };
 }
+export { parseData };

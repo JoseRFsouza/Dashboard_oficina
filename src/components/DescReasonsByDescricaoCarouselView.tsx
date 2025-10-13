@@ -10,7 +10,7 @@ export type ReasonsSlide = {
 };
 
 export default function DescReasonsByDescricaoCarouselView({
-  title = 'Rank — Motivos por Descrição',
+  title = 'Rank — Removal Reasons by Work Order',
   slides,
   intervalMs = 3500,
 }: {
