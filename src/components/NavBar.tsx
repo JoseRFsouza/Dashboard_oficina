@@ -1,13 +1,10 @@
 "use client";
-import { LogOut, Moon, Sun, User } from "lucide-react";
+import { Moon, Sun,} from "lucide-react";
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
@@ -15,10 +12,12 @@ import { useTheme } from "next-themes";
 import { Button } from "./ui/button";
 import CsvUploadDialog from "@/modals/uploader/csvUpload";
 import {SimuladorDataModal} from "@/modals/SimuladorDataModal";
+import { useCSV } from "@/lib/useCSV";
 
 
 const NavBar = () => {
   const { setTheme } = useTheme();
+  const { resetCSV } = useCSV(); // 🔑 pega a função de reset
 
   return (
     <nav className="h-16 px-4 flex items-center justify-between bg-background border-b shadow-md">
@@ -26,7 +25,7 @@ const NavBar = () => {
       
       
         <div className="flex items-center gap-2">
-          <CsvUploadDialog/>
+          <CsvUploadDialog onReset={resetCSV} />
           <SimuladorDataModal />
         </div>
       

@@ -1,15 +1,39 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 export function useCSV() {
-  // sempre chama o hook
-  const raw = typeof window !== "undefined" ? localStorage.getItem("csvData") : null;
+  const [registros, setRegistros] = useState<Record<string, string>[]>([]);
 
-  return useMemo(() => {
-    if (!raw) return [];
-    try {
-      return JSON.parse(raw) as Record<string, string>[];
-    } catch {
-      return [];
+  // Carrega do localStorage na primeira vez
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const raw = localStorage.getItem("csvData");
+      if (raw) {
+        try {
+          setRegistros(JSON.parse(raw));
+        } catch {
+          setRegistros([]);
+        }
+      }
     }
-  }, [raw]);
+  }, []);
+
+  // 🔑 Função para resetar globalmente
+  const resetCSV = () => {
+    setRegistros([]);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("csvData");
+      localStorage.removeItem("csvHeaders");
+      localStorage.removeItem("csvSelectedColumns");
+    }
+  };
+
+  // 🔑 Função para atualizar (quando fizer upload novo)
+  const updateCSV = (rows: Record<string, string>[]) => {
+    setRegistros(rows);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("csvData", JSON.stringify(rows));
+    }
+  };
+
+  return { registros, resetCSV, updateCSV };
 }

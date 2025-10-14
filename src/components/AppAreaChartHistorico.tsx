@@ -21,7 +21,7 @@ import {
 } from "@/lib/estatisticaSegVoo";
 
 export default function AppAreaChartHistorico() {
-  const registros = useCSV();
+  const { registros } = useCSV();
   const [dataRef, setDataRef] = useState<Date>(new Date());
   const [dados, setDados] = useState<any[]>([]);
   const [picoHistorico, setPicoHistorico] = useState<number>(0);

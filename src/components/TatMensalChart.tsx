@@ -17,7 +17,7 @@ import { useTheme } from "next-themes";
 import { calcularTatMensal } from "@/lib/tatMensal";
 
 export default function TatMensalChart() {
-  const registros = useCSV();
+  const { registros } = useCSV();
   const [dados, setDados] = useState<any[]>([]);
   const { theme } = useTheme();
 
