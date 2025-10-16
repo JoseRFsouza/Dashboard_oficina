@@ -29,6 +29,10 @@ interface DadoMensal {
   anterior: number | null;
 }
 
+interface RegistroSegVoo {
+  SegVoo: string;
+}
+
 
 // ✅ Tipo para o retorno da função calcularSegvooMensalTotal
 type ResultadoSegVoo =
@@ -59,23 +63,32 @@ export default function AppAreaChartHistorico() {
     buscarDataSimulada();
   }, []);
 
-  useEffect(() => {
-    const resultado: ResultadoSegVoo = calcularSegvooMensalTotal(registros, dataRef);
+  
+useEffect(() => {
+  const registrosConvertidos: RegistroSegVoo[] = registros
+    .map((r) => {
+      const segvoo = r["SegVoo"];
+      return typeof segvoo === "string" ? { SegVoo: segvoo } : null;
+    })
+    .filter((r): r is RegistroSegVoo => r !== null);
 
-    if (Array.isArray(resultado)) {
-      setDados(resultado);
-      const maxVal = Math.max(
-        ...resultado.map((r: DadoMensal) => Math.max(r.atual ?? 0, r.anterior ?? 0))
-      );
-      setPicoHistorico(maxVal);
-    } else if (resultado && Array.isArray(resultado.dados)) {
-      setDados(resultado.dados);
-      setPicoHistorico(resultado.picoHistorico ?? 0);
-    } else {
-      setDados([]);
-      setPicoHistorico(0);
-    }
-  }, [registros, dataRef]);
+  const resultado: ResultadoSegVoo = calcularSegvooMensalTotal(registrosConvertidos, dataRef);
+
+  if (Array.isArray(resultado)) {
+    setDados(resultado);
+    const maxVal = Math.max(
+      ...resultado.map((r: DadoMensal) => Math.max(r.atual ?? 0, r.anterior ?? 0))
+    );
+    setPicoHistorico(maxVal);
+  } else if (resultado && Array.isArray(resultado.dados)) {
+    setDados(resultado.dados);
+    setPicoHistorico(resultado.picoHistorico ?? 0);
+  } else {
+    setDados([]);
+    setPicoHistorico(0);
+  }
+}, [registros, dataRef]);
+
 
   const labelColor = theme === "dark" ? "#fff" : "#000";
 
