@@ -16,9 +16,14 @@ import { useCSV } from "@/lib/useCSV";
 import { useTheme } from "next-themes";
 import { calcularTatMensal } from "@/lib/tatMensal";
 
+interface TatMensal {
+  mes: string;
+  tat: number;
+}
+
 export default function TatMensalChart() {
   const { registros } = useCSV();
-  const [dados, setDados] = useState<any[]>([]);
+  const [dados, setDados] = useState<TatMensal[]>([]);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -65,7 +70,7 @@ export default function TatMensalChart() {
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
               tick={(props) => {
                 const { x, y, payload } = props;
-                const isHighlight = payload.value === 30; // só o 30
+                const isHighlight = payload.value === 30;
                 return (
                   <text
                     x={x}
@@ -83,19 +88,16 @@ export default function TatMensalChart() {
             />
             <Tooltip
               contentStyle={{
-              backgroundColor: theme === "dark" ? "#1f2937" : "#f9fafb", // fundo escuro ou claro
-              border: "1px solid #d1d5db", // borda cinza
-              borderRadius: "6px",
-              color: theme === "dark" ? "#ffffff" : "#111827", // cor do texto
-              
-            }}
-            labelStyle={{
-              color: theme === "dark" ? "#ffffff" : "#111827",
-              
-            }}
+                backgroundColor: theme === "dark" ? "#1f2937" : "#f9fafb",
+                border: "1px solid #d1d5db",
+                borderRadius: "6px",
+                color: theme === "dark" ? "#ffffff" : "#111827",
+              }}
+              labelStyle={{
+                color: theme === "dark" ? "#ffffff" : "#111827",
+              }}
             />
 
-            {/* Linha vermelha no Y=30 (limite contratual) */}
             <ReferenceLine
               y={30}
               stroke="red"
@@ -114,7 +116,7 @@ export default function TatMensalChart() {
               {dados.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry.tat > 30 ? "#ef4444" : "#0ea5e9"} // vermelho se >30
+                  fill={entry.tat > 30 ? "#ef4444" : "#0ea5e9"}
                 />
               ))}
               <LabelList

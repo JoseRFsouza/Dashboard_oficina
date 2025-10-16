@@ -11,19 +11,31 @@ import {
 } from "recharts";
 import { useCSV } from "@/lib/useCSV";
 import { filtrarSemanaSimulada } from "@/lib/filtroSemana";
-import { useTheme } from "next-themes";
 import { getISOWeek } from "date-fns";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart"; 
 import { colorFor } from "@/lib/color.util"; 
 import type { TooltipProps } from 'recharts';
 
-// Nome padronizado a partir do entry (payload do Recharts)
-function formatSliceNameFromEntry(entry: any) {
-   return (String(entry?.payload?.name ?? entry?.name ?? ''));
+
+interface PieData {
+  name: string;
+  value: number;
 }
 
+
+
+
+// Nome padronizado a partir do entry (payload do Recharts)
+
+function formatSliceNameFromEntry(entry: { payload?: PieData; name?: string }) {
+  return String(entry?.payload?.name ?? entry?.name ?? '');
+}
+
+
 // saneamento de valores
-const saneNumber = (v: any) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+const saneNumber = (v: unknown): number =>  Number.isFinite(Number(v)) ? Number(v) : 0;
+
 
 const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
@@ -47,11 +59,11 @@ const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload
 
 export default function DescXQtdPieChart() {
   const { registros } = useCSV();
-  const [entradas, setEntradas] = useState<any[]>([]);
-  const [saidas, setSaidas] = useState<any[]>([]);
+  const [entradas, setEntradas] = useState<PieData[]>([]);
+  const [saidas, setSaidas] = useState<PieData[]>([]);
   const [semana, setSemana] = useState<number | null>(null);
   const [ano, setAno] = useState<number | null>(null);
-  const { theme } = useTheme();
+ 
 
   useEffect(() => {
     async function carregarDados() {
@@ -107,20 +119,22 @@ export default function DescXQtdPieChart() {
     colorMap[desc] = colorFor(desc);
   });
 
-  const renderDonut = (
-    data: any[],
-    titulo: string,
-    colorMap: Record<string, string>
-  ) => {
-    const dataFiltrada = (data || [])
-      .map((d) => ({
-        ...d,
-        value: saneNumber(d.value),
-        name: typeof d.name === 'string' ? d.name.trim() : '',
-      }))
-      .filter((d) => d.value > 0 && d.name);
+  
+const renderDonut = (
+  data: PieData[],
+  titulo: string,
+  colorMap: Record<string, string>
+) => {
+  const dataFiltrada = (data || [])
+    .map((d) => ({
+      ...d,
+      value: saneNumber(d.value),
+      name: typeof d.name === 'string' ? d.name.trim() : '',
+    }))
+    .filter((d) => d.value > 0 && d.name);
 
-    const total = dataFiltrada.reduce((acc, curr) => acc + curr.value, 0);
+  const total = dataFiltrada.reduce((acc, curr) => acc + curr.value, 0);
+
 
     return (
       <div className="flex flex-col items-center">

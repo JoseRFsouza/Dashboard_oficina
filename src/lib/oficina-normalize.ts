@@ -14,7 +14,7 @@ export type ReasonCategory =
   | 'OTHER'
   | 'UNSPECIFIED';
 
-export type Row = Record<string, any>;
+export type Row = Record<string, unknown>;
 
 export interface NormalizeOptions {
   descriptionKeys?: string[];   // default: ['Descricao','Descrição','Descri��o']
@@ -193,7 +193,8 @@ const MONTHS: Record<string, number> = {
   dez: 12, dezembro: 12, dec: 12, december: 12,
 };
 
-export function normalizeMonth(v: any): number | null {
+
+export function normalizeMonth(v: unknown): number | null {
   if (v == null) return null;
   const raw = String(v).trim().toLowerCase();
   if (!raw) return null;
@@ -203,11 +204,12 @@ export function normalizeMonth(v: any): number | null {
   return MONTHS[s] ?? MONTHS[`${s}_en`] ?? null;
 }
 
-export function normalizeYear(v: any): number | null {
+export function normalizeYear(v: unknown): number | null {
   if (v == null) return null;
   const y = Number(v);
   return Number.isFinite(y) ? y : null;
 }
+
 
 export function monthKey(year: number | null, month: number | null): string | null {
   if (!year || !month) return null;
@@ -255,12 +257,14 @@ const REASON_RAW_KEYS = [
 ];
 
 
+
 export function extractNormalizedReasonsFromRow(
-  row: Record<string, any>,
+  row: Row,
   {
     reasonRawKeys = REASON_RAW_KEYS,
     dedupe = true,
-  }: { reasonRawKeys?: string[]; dedupe?: boolean } = {}
+  }
+: { reasonRawKeys?: string[]; dedupe?: boolean } = {}
 ): ReasonCategory[] {
   const raw = pickFirst(row, reasonRawKeys);
   if (!raw) return [];

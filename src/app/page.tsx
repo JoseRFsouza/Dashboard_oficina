@@ -4,7 +4,6 @@ import TatMensalChart from "@/components/TatMensalChart";
 
 
 import WeekNum from "@/components/weekNum";
-import DescRankCard from "@/components/card/DescRankCard";
 import DescReasonsByDescricaoCard from "@/components/card/DescRankCard";
 
 export default function Homepage() {

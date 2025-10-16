@@ -20,10 +20,28 @@ import {
   gerarLegendaComVariação,
 } from "@/lib/estatisticaSegVoo";
 
+// ✅ Interface para os dados mensais
+
+interface DadoMensal {
+  mes: string;
+  ano?: string | number;
+  atual: number | null;
+  anterior: number | null;
+}
+
+
+// ✅ Tipo para o retorno da função calcularSegvooMensalTotal
+type ResultadoSegVoo =
+  | DadoMensal[]
+  | {
+      dados: DadoMensal[];
+      picoHistorico: number;
+    };
+
 export default function AppAreaChartHistorico() {
   const { registros } = useCSV();
   const [dataRef, setDataRef] = useState<Date>(new Date());
-  const [dados, setDados] = useState<any[]>([]);
+  const [dados, setDados] = useState<DadoMensal[]>([]);
   const [picoHistorico, setPicoHistorico] = useState<number>(0);
   const { theme } = useTheme();
 
@@ -42,22 +60,18 @@ export default function AppAreaChartHistorico() {
   }, []);
 
   useEffect(() => {
-    const resultado = calcularSegvooMensalTotal(registros, dataRef);
+    const resultado: ResultadoSegVoo = calcularSegvooMensalTotal(registros, dataRef);
 
-    // resultado pode ser um array direto, ou um objeto { dados, picoHistorico }
     if (Array.isArray(resultado)) {
-      // quando a função retorna diretamente o array
       setDados(resultado);
       const maxVal = Math.max(
-        ...resultado.map((r: any) => Math.max(r.atual ?? 0, r.anterior ?? 0))
+        ...resultado.map((r: DadoMensal) => Math.max(r.atual ?? 0, r.anterior ?? 0))
       );
       setPicoHistorico(maxVal);
-    } else if (resultado && Array.isArray((resultado as any).dados)) {
-      // quando a função retorna { dados, picoHistorico }
-      setDados((resultado as any).dados);
-      setPicoHistorico((resultado as any).picoHistorico ?? 0);
+    } else if (resultado && Array.isArray(resultado.dados)) {
+      setDados(resultado.dados);
+      setPicoHistorico(resultado.picoHistorico ?? 0);
     } else {
-      // fallback seguro
       setDados([]);
       setPicoHistorico(0);
     }
@@ -71,7 +85,7 @@ export default function AppAreaChartHistorico() {
   const anoAtual = dados.find((r) => r.atual !== null)?.ano ?? "Atual";
   const anoAnterior = dados.find((r) => r.anterior !== null)?.ano ?? "Anterior";
 
-  const legendaAtual = gerarLegendaComVariação(anoAtual, variacao);
+  const legendaAtual = gerarLegendaComVariação(String(anoAtual), variacao);
 
   return (
     <div className="w-full h-auto">
@@ -107,7 +121,6 @@ export default function AppAreaChartHistorico() {
                 0,
                 (dataMax: number) => Math.ceil(Math.max(dataMax, picoHistorico) * 1.1)
               ]}
-
             />
             <Tooltip
               contentStyle={{
@@ -131,9 +144,9 @@ export default function AppAreaChartHistorico() {
                 strokeDasharray="4 4"
                 label={{
                   value: `All the time releases count (${picoHistorico})`,
-                  position: "top",       // coloca o texto acima da linha
-                  offset: 8,             // dá um espaçozinho do traço
-                  fill: "lightgreen", // cor do texto
+                  position: "top",
+                  offset: 8,
+                  fill: "lightgreen",
                   fontSize: 12,
                   fontWeight: "bold",
                 }}
@@ -147,7 +160,7 @@ export default function AppAreaChartHistorico() {
               strokeDasharray="4 4"
               strokeWidth={3}
               fillOpacity={0}
-              name={anoAnterior}
+              name={String(anoAnterior)}
             />
             <Area
               type="monotone"

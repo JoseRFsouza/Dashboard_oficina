@@ -1,6 +1,10 @@
 import { subMonths, format } from "date-fns";
 import { enUS } from "date-fns/locale";
 
+interface RegistroSegVoo {
+  SegVoo: string;
+}
+
 function parseData(raw: string): Date | null {
   if (!raw) return null;
   const partes = raw.split("-");
@@ -20,10 +24,9 @@ function parseData(raw: string): Date | null {
   const anoFull = ano.length === 2 ? "20" + ano : ano;
   const data = new Date(`${anoFull}-${mes}-${dia}`);
   return isNaN(data.getTime()) ? null : data;
-  
 }
 
-export function calcularSegvooMensalTotal(registros: any[], dataRef: Date) {
+export function calcularSegvooMensalTotal(registros: RegistroSegVoo[], dataRef: Date) {
   const inicio = subMonths(dataRef, 12);
   const inicioAnterior = subMonths(dataRef, 24);
   const fimAnterior = subMonths(dataRef, 12);
@@ -37,10 +40,7 @@ export function calcularSegvooMensalTotal(registros: any[], dataRef: Date) {
   const atual: Record<string, number> = {};
   const anterior: Record<string, number> = {};
 
-  let picoHistorico = 0;
-
   registros.forEach((reg) => {
-    
     const dataSegvoo = parseData(reg["SegVoo"]);
     if (!dataSegvoo) return;
 
@@ -53,7 +53,6 @@ export function calcularSegvooMensalTotal(registros: any[], dataRef: Date) {
     if (dataSegvoo >= inicioAnterior && dataSegvoo <= fimAnterior) {
       anterior[mes] = (anterior[mes] || 0) + 1;
     }
-     picoHistorico++;
   });
 
   const dados = meses.map((mes) => ({
@@ -62,7 +61,10 @@ export function calcularSegvooMensalTotal(registros: any[], dataRef: Date) {
     anterior: anterior[mes] || 0,
   }));
 
-  // devolve também o pico histórico
-  return { dados, picoHistorico: Math.max(...dados.map(d => Math.max(d.atual, d.anterior))) };
+  return {
+    dados,
+    picoHistorico: Math.max(...dados.map(d => Math.max(d.atual, d.anterior)))
+  };
 }
+
 export { parseData };

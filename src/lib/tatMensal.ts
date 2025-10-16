@@ -1,4 +1,5 @@
 import { subMonths, format } from "date-fns";
+import { enUS } from "date-fns/locale";
 
 function parseData(raw: string): Date | null {
   if (!raw) return null;
@@ -21,40 +22,34 @@ function parseData(raw: string): Date | null {
   return isNaN(data.getTime()) ? null : data;
 }
 
+interface RegistroTat {
+  [key: string]: string | undefined;
+}
 
-import { enUS} from "date-fns/locale"; // escolha o idioma
+export function calcularTatMensal(registros: RegistroTat[], dataRef: Date) {
+  const mesBase = subMonths(dataRef, 1);
 
-export function calcularTatMensal(registros: any[], dataRef: Date) {
-  // mês anterior à semana de referência
-  let mesBase = subMonths(dataRef, 1);
-
-  // últimos 6 meses
   const meses: Date[] = [];
   for (let i = 5; i >= 0; i--) {
     meses.push(subMonths(mesBase, i));
   }
 
-  // agrupar TAT por mês
   const agrupados: Record<string, number[]> = {};
 
   registros.forEach((reg) => {
-    const dataIn = parseData(reg["R.S. In"]);
-    const dataOut = parseData(reg["RETURN TO AZUL"]);
+    const dataIn = parseData(reg["R.S. In"] ?? "");
+    const dataOut = parseData(reg["RETURN TO AZUL"] ?? "");
 
     if (dataIn && dataOut) {
-      const tatDias =
-        (dataOut.getTime() - dataIn.getTime()) / (1000 * 60 * 60 * 24);
-
-      // 🔑 use sempre o mesmo formato
-      const chave = format(dataOut, "MMM/yy", { locale: enUS }); 
+      const tatDias = (dataOut.getTime() - dataIn.getTime()) / (1000 * 60 * 60 * 24);
+      const chave = format(dataOut, "MMM/yy", { locale: enUS });
       if (!agrupados[chave]) agrupados[chave] = [];
       agrupados[chave].push(tatDias);
     }
   });
 
-  // calcular médias
   return meses.map((m) => {
-    const chave = format(m, "MMM/yy", { locale: enUS }); // mesmo formato aqui
+    const chave = format(m, "MMM/yy", { locale: enUS });
     const valores = agrupados[chave] || [];
     const media =
       valores.length > 0

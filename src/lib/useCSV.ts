@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import {useState, useEffect } from "react";
 
 export function useCSV() {
   const [registros, setRegistros] = useState<Record<string, string>[]>([]);

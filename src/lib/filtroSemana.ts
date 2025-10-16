@@ -2,15 +2,18 @@ import { getISOWeek, getISOWeekYear, subWeeks } from "date-fns";
 import { gerarMapaDescricao } from "@/lib/mapaDescricao";
 import { parseData } from "@/lib/filtroHistoricoSegVoo";
 
+interface RegistroGenerico {
+  [key: string]: string | undefined;
+}
+
 // Função auxiliar para normalizar a descrição
-function normalizarDescricao(reg: any): string {
+function normalizarDescricao(reg: RegistroGenerico): string {
   const keys = Object.keys(reg);
 
-  // procura por qualquer chave que contenha "descr" (sem acento, case-insensitive)
   const key = keys.find((k) =>
     k.toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // remove acentos
+      .replace(/[\u0300-\u036f]/g, "")
       .includes("descricao")
   );
 
@@ -20,16 +23,13 @@ function normalizarDescricao(reg: any): string {
   return "";
 }
 
-export function filtrarSemanaSimulada(registros: any[], dataRef: Date) {
+export function filtrarSemanaSimulada(registros: RegistroGenerico[], dataRef: Date) {
   let tentativa = 0;
   let dados: { descricao: string; entradas: number; saidas: number; cor: string }[] = [];
   let semanaEncontrada: number | null = null;
   let anoEncontrado: number | null = null;
 
-  // limite inferior: não voltar antes de 2018
   const limiteInferior = new Date("2018-01-01");
-
-  // gera o mapa de descrições → cores
   const mapaDescricoes = gerarMapaDescricao(registros);
 
   while (tentativa < 52 && dataRef >= limiteInferior && dados.length === 0) {
@@ -42,22 +42,16 @@ export function filtrarSemanaSimulada(registros: any[], dataRef: Date) {
       const descRaw = normalizarDescricao(reg);
       const desc = descRaw !== "" ? descRaw : "Sem descrição";
 
-      // Entrada
-      const dataIn = parseData(reg["R.S. In"]);
-      if (dataIn) {
-        if (getISOWeek(dataIn) === semanaAtual && getISOWeekYear(dataIn) === anoAtual) {
-          if (!agrupados[desc]) agrupados[desc] = { entradas: 0, saidas: 0 };
-          agrupados[desc].entradas++;
-        }
+      const dataIn = parseData(reg["R.S. In"] ?? "");
+      if (dataIn && getISOWeek(dataIn) === semanaAtual && getISOWeekYear(dataIn) === anoAtual) {
+        if (!agrupados[desc]) agrupados[desc] = { entradas: 0, saidas: 0 };
+        agrupados[desc].entradas++;
       }
 
-      // Saída
-      const dataOut = parseData(reg["R.S. Out"]);
-      if (dataOut) {
-        if (getISOWeek(dataOut) === semanaAtual && getISOWeekYear(dataOut) === anoAtual) {
-          if (!agrupados[desc]) agrupados[desc] = { entradas: 0, saidas: 0 };
-          agrupados[desc].saidas++;
-        }
+      const dataOut = parseData(reg["R.S. Out"] ?? "");
+      if (dataOut && getISOWeek(dataOut) === semanaAtual && getISOWeekYear(dataOut) === anoAtual) {
+        if (!agrupados[desc]) agrupados[desc] = { entradas: 0, saidas: 0 };
+        agrupados[desc].saidas++;
       }
     });
 
@@ -65,7 +59,7 @@ export function filtrarSemanaSimulada(registros: any[], dataRef: Date) {
       descricao,
       entradas: valores.entradas,
       saidas: valores.saidas,
-      cor: mapaDescricoes[descricao] ?? "#999", // pega cor do mapa ou fallback
+      cor: mapaDescricoes[descricao] ?? "#999",
     }));
 
     if (dados.length > 0) {
@@ -74,7 +68,6 @@ export function filtrarSemanaSimulada(registros: any[], dataRef: Date) {
       break;
     }
 
-    // não achou nada → volta 1 semana
     dataRef = subWeeks(dataRef, 1);
     tentativa++;
   }

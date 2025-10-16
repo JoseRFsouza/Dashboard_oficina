@@ -20,13 +20,14 @@ export interface GroupTopReasonsOptions {
 const DEFAULT_DESC_KEYS = ['Descricao', 'Descrição', 'Descri��o'];
 const DEFAULT_EXCLUDE: ReasonCategory[] = ['NFF / TEST OK', 'UNSPECIFIED'];
 
-function pickFirst(obj: Record<string, any>, keys: string[]): string {
+function pickFirst(obj: Row, keys: string[]): string {
   for (const k of keys) {
     const v = obj?.[k];
     if (typeof v === 'string' && v.trim()) return v.trim();
   }
   return '';
 }
+
 
 /**
  * Retorna "slides" prontos:
