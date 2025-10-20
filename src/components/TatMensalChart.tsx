@@ -16,9 +16,14 @@ import { useCSV } from "@/lib/useCSV";
 import { useTheme } from "next-themes";
 import { calcularTatMensal } from "@/lib/tatMensal";
 
+interface TatMensal {
+  mes: string;
+  tat: number;
+}
+
 export default function TatMensalChart() {
-  const registros = useCSV();
-  const [dados, setDados] = useState<any[]>([]);
+  const { registros } = useCSV();
+  const [dados, setDados] = useState<TatMensal[]>([]);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -44,63 +49,81 @@ export default function TatMensalChart() {
   return (
     <div className="w-full h-[460px]">
       <h3 className="text-lg font-semibold mb-2">
-        TAT Médio Mensal — Últimos 6 Meses
+        Montly TurnArroundTime — Last 6 months (in days)
       </h3>
-      <div className="flex-1 w-full h-full">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="items-justified-center w-full h-full">
+        <ResponsiveContainer width="100%" height={430}>
           <BarChart data={dados} margin={{ bottom: 10 }}>
             <XAxis
               dataKey="mes"
               interval={0}
               minTickGap={0}
-              tick={{ fontSize: 14, fontWeight: "bold", fill: labelColor }}
+              tick={{ fontSize: 14, fill: labelColor }}
               axisLine={{ stroke: labelColor, strokeWidth: 2 }}
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
-              angle={-30}
+              angle={0}
               textAnchor="end"
             />
             <YAxis
-              domain={[0, 35]}
-              tick={{ fontSize: 14, fontWeight: "bold", fill: labelColor }}
-              axisLine={{ stroke: labelColor, strokeWidth: 2 }}   // linha do eixo Y
+              domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.1)]}
+              axisLine={{ stroke: labelColor, strokeWidth: 2 }}
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
+              tick={(props) => {
+                const { x, y, payload } = props;
+                const isHighlight = payload.value === 30;
+                return (
+                  <text
+                    x={x}
+                    y={y}
+                    dy={4}
+                    textAnchor="end"
+                    fill={isHighlight ? "red" : labelColor}
+                    fontWeight={isHighlight ? "bold" : "normal"}
+                    fontSize={14}
+                  >
+                    {payload.value}
+                  </text>
+                );
+              }}
             />
             <Tooltip
-              cursor={{
-                fill:
-                  theme === "dark"
-                    ? "rgba(255,255,255,0.1)"
-                    : "rgba(0,0,0,0.05)",
+              contentStyle={{
+                backgroundColor: theme === "dark" ? "#1f2937" : "#f9fafb",
+                border: "1px solid #d1d5db",
+                borderRadius: "6px",
+                color: theme === "dark" ? "#ffffff" : "#111827",
+              }}
+              labelStyle={{
+                color: theme === "dark" ? "#ffffff" : "#111827",
               }}
             />
 
-            {/* Linha vermelha no Y=30 (limite contratual) */}
             <ReferenceLine
               y={30}
               stroke="red"
               strokeWidth={2}
               strokeDasharray="4 4"
               label={{
-                value: "Limite Contratual (30 dias)",
-                position: "right",
-                fill: "red",
+                value: "",
+                position: "top",
+                fill: "orange",
                 fontSize: 12,
                 fontWeight: "bold",
               }}
             />
 
-            <Bar dataKey="tat" name="TAT Médio (dias)">
+            <Bar dataKey="tat" name="TAT (days)">
               {dados.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry.tat > 30 ? "#ef4444" : "#0ea5e9"} // vermelho se >30
+                  fill={entry.tat > 30 ? "#ef4444" : "#0ea5e9"}
                 />
               ))}
               <LabelList
                 dataKey="tat"
                 position="top"
                 formatter={(value: number) =>
-                  value === 0 ? "" : `${Math.round(value)} dias`
+                  value === 0 ? "" : `${Math.round(value)} days`
                 }
                 style={{
                   fontSize: 14,

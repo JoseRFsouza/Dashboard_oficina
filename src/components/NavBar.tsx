@@ -1,36 +1,42 @@
 "use client";
-import { LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { Moon, Sun,} from "lucide-react";
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
 import { useTheme } from "next-themes";
-import { SidebarTrigger } from "./ui/sidebar";
 import { Button } from "./ui/button";
+import CsvUploadDialog from "@/modals/uploader/csvUpload";
+import {SimuladorDataModal} from "@/modals/SimuladorDataModal";
+import { useCSV } from "@/lib/useCSV";
+
 
 const NavBar = () => {
-  const { theme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
+  const { resetCSV } = useCSV(); // 🔑 pega a função de reset
 
   return (
-    <nav className="h-16 px-4 flex items-center justify-between">
+    <nav className="h-16 px-4 flex items-center justify-between bg-background border-b shadow-md">
       {/* LEFT */}
-      <div className="flex items-center gap-3">
-        {/* Botão de colapsar sidebar */}
-        <SidebarTrigger className="w-6 h-6 cursor-pointer" />
-      </div>
-
-        <div className="flex items-center gap-4">
-        <Link href="/" className="font-semibold text-base">
-          Dashboard
-        </Link>
       
+      
+        <div className="flex items-center gap-2">
+          <CsvUploadDialog onReset={resetCSV} />
+          <SimuladorDataModal />
+        </div>
+      
+
+      {/* RIGHT */}
+      <div className="flex items-center gap-4">
+        <Link href="/" className="font-semibold text-base">
+          DASHBOARD IFE REPAIR SHOP
+        </Link>
+         </div>
+         <div className="flex items-center gap-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">
@@ -52,34 +58,12 @@ const NavBar = () => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* USER MENU */}
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Avatar>
-              <AvatarImage src="https://avatars.githubusercontent.com/u/1486366" />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent sideOffset={10}>
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="h-[1.2rem] w-[1.2rem] mr-2" />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="h-[1.2rem] w-[1.2rem] mr-2" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive">
-              <LogOut className="h-[1.2rem] w-[1.2rem] mr-2" />
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        
+       
       </div>
     </nav>
   );
 };
+
 
 export default NavBar;

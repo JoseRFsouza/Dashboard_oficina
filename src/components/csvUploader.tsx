@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import Papa from 'papaparse';
-
+import { useCSV } from '@/lib/useCSV'; // 🔑 importa o hook global
 
 export default function CsvWithPersistence({ onClose }: { onClose: () => void }) {
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [dragActive, setDragActive] = useState(false);
-  const [showTable, setShowTable] = useState(false); // 🔹 controla exibição da tabela
+  const [showTable, setShowTable] = useState(false);
+
+  const { updateCSV } = useCSV(); // 🔑 função global para atualizar registros
 
   // Carregar dados do localStorage ao iniciar
   useEffect(() => {
@@ -22,49 +24,43 @@ export default function CsvWithPersistence({ onClose }: { onClose: () => void })
       setRows(JSON.parse(savedData));
       setHeaders(hdrs);
       setSelectedColumns(savedColumns ? JSON.parse(savedColumns) : hdrs);
-      setShowTable(true); // mostra tabela se já havia dados salvos
+      setShowTable(true);
     }
   }, []);
 
   const processFile = (file: File) => {
-    console.log("Arquivo recebido:", file.name);
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       delimiter: ";",
       encoding: "latin1",
       complete: (result) => {
-        console.log("Papa.parse terminou. Total de linhas:", result.data.length);
         const parsed = result.data as Record<string, string>[];
 
         const cleanedRows = parsed.map((row) => {
-  const cleanedRow: Record<string, string> = {};
-  Object.entries(row).forEach(([key, value]) => {
-    // Normaliza o header
-    const cleanKey = key
-      .replace(/^["']|["']$/g, "") // remove aspas
-      .trim()
-      .normalize("NFD") // separa acentos
-      .replace(/[\u0300-\u036f]/g, "") // remove acentos
-      .replace(/�/g, "") // remove caracteres corrompidos
-      .replace(/\s+/g, " "); // normaliza espaços
-
-    cleanedRow[cleanKey] = value ?? "";
-  });
-  return cleanedRow;
-});
-
+          const cleanedRow: Record<string, string> = {};
+          Object.entries(row).forEach(([key, value]) => {
+            const cleanKey = key
+              .replace(/^["']|["']$/g, "")
+              .trim()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/�/g, "")
+              .replace(/\s+/g, " ");
+            cleanedRow[cleanKey] = value ?? "";
+          });
+          return cleanedRow;
+        });
 
         const hdrs = Object.keys(cleanedRows[0] || {});
-        console.log("Cabeçalhos normalizados:", hdrs);
         setRows(cleanedRows);
         setHeaders(hdrs);
-        setSelectedColumns(hdrs); // pré-seleciona todas
-        setShowTable(true); // mostra tabela após upload
+        setSelectedColumns(hdrs);
+        setShowTable(true);
       },
       error: (err) => {
-      console.error("Erro no Papa.parse:", err);
-    },
+        console.error("Erro no Papa.parse:", err);
+      },
     });
   };
 
@@ -97,10 +93,18 @@ export default function CsvWithPersistence({ onClose }: { onClose: () => void })
   };
 
   const handleConfirmSelection = () => {
+    // 🔑 salva no localStorage
     localStorage.setItem('csvData', JSON.stringify(rows));
     localStorage.setItem('csvHeaders', JSON.stringify(headers));
     localStorage.setItem('csvSelectedColumns', JSON.stringify(selectedColumns));
-    onClose(); // 🔹 avisa o pai para fechar o modal
+
+    // 🔑 atualiza o estado global imediatamente
+    updateCSV(rows);
+
+    // fecha o modal
+    onClose();
+
+    window.location.reload();
   };
 
   return (
@@ -134,64 +138,66 @@ export default function CsvWithPersistence({ onClose }: { onClose: () => void })
       </div>
 
       {/* Seleção de colunas + tabela */}
-{headers.length > 0 && showTable && (
-  <div className="mt-4">
-    <h2 className="font-semibold">Desmarque as colunas que não deseja usar:</h2>
-    <div className="flex flex-wrap gap-3 mt-2">
-      {headers.map((header) => (
-        <label key={header} className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={selectedColumns.includes(header)}
-            onChange={() => handleSelectionChange(header)}
-          />
-          {header}
-        </label>
-      ))}
-    </div>
-
-    {/* Botão Confirmar que também fecha o modal */}
-    <button
-  onClick={handleConfirmSelection}
-  className="mt-3 px-4 py-2 bg-blue-600 text-white rounded"
->
-  Confirmar Seleção
-</button>
-<button
-  onClick={onClose}
-  className="mt-3 ml-3 px-4 py-2 bg-gray-400 text-white rounded"
->
-  Cancelar
-</button>
-
-    {/* Prévia */}
-    <div className="mt-6 overflow-auto max-h-80 border">
-      <table className="w-full text-sm border-collapse border border-gray-400">
-        <thead>
-          <tr className="bg-gray-200">
-            {selectedColumns.map((header, i) => (
-              <th key={i} className="border p-2">{header}</th>
+      {headers.length > 0 && showTable && (
+        <div className="mt-4">
+          <h2 className="font-semibold">Desmarque as colunas que não deseja usar:</h2>
+          <div className="flex flex-wrap gap-3 mt-2">
+            {headers.map((header) => (
+              <label key={header} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={selectedColumns.includes(header)}
+                  onChange={() => handleSelectionChange(header)}
+                />
+                {header}
+              </label>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.slice(0, 10).map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {selectedColumns.map((header, cellIndex) => (
-                <td key={cellIndex} className="border p-2">
-                  {row[header] || <span className="text-gray-400 italic">vazio</span>}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="mt-2 text-gray-600">
-        Total de linhas: <strong>{rows.length}</strong>
-      </p>
+          </div>
+
+          {/* Botões */}
+          <button
+            onClick={handleConfirmSelection}
+            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            Confirmar Seleção
+          </button>
+          <button
+            onClick={() => {
+              onClose();
+              window.location.reload(); // 🔄 recarrega ao cancelar também
+            }}
+            className="mt-3 ml-3 px-4 py-2 bg-gray-400 text-white rounded">
+            Cancelar
+          </button>
+
+          {/* Prévia */}
+          <div className="mt-6 overflow-auto max-h-80 border">
+            <table className="w-full text-sm border-collapse border border-gray-400">
+              <thead>
+                <tr className="bg-gray-200">
+                  {selectedColumns.map((header, i) => (
+                    <th key={i} className="border p-2">{header}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.slice(0, 10).map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {selectedColumns.map((header, cellIndex) => (
+                      <td key={cellIndex} className="border p-2">
+                        {row[header] || <span className="text-gray-400 italic">vazio</span>}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="mt-2 text-gray-600">
+              Total de linhas: <strong>{rows.length}</strong>
+            </p>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-)}
-</div>
   );
 }

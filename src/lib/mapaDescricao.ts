@@ -13,7 +13,11 @@ const coresBase = [
   "#4ade80", // verde claro
 ];
 
-export function gerarMapaDescricao(registros: any[]): Record<string, string> {
+interface RegistroDescricao {
+  [key: string]: string | undefined;
+}
+
+export function gerarMapaDescricao(registros: RegistroDescricao[]): Record<string, string> {
   const descricoesSet = new Set<string>();
 
   registros.forEach((reg) => {

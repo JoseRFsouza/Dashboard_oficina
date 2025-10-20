@@ -7,21 +7,63 @@ import {
   Cell,
   ResponsiveContainer,
   Label,
+  LabelList,
 } from "recharts";
 import { useCSV } from "@/lib/useCSV";
 import { filtrarSemanaSimulada } from "@/lib/filtroSemana";
-import { useTheme } from "next-themes";
 import { getISOWeek } from "date-fns";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"; 
-// ajuste o import conforme onde você declarou esses wrappers
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart"; 
+import { colorFor } from "@/lib/color.util"; 
+import type { TooltipProps } from 'recharts';
+
+
+interface PieData {
+  name: string;
+  value: number;
+}
+
+
+
+
+// Nome padronizado a partir do entry (payload do Recharts)
+
+function formatSliceNameFromEntry(entry: { payload?: PieData; name?: string }) {
+  return String(entry?.payload?.name ?? entry?.name ?? '');
+}
+
+
+// saneamento de valores
+
+const saneNumber = (v: unknown): number =>  Number.isFinite(Number(v)) ? Number(v) : 0;
+
+
+const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const entry = payload[0];
+  const name  = formatSliceNameFromEntry(entry);
+  const value = saneNumber(entry.value);
+
+  return (
+    <div className="rounded-md border bg-popover px-2 py-1 text-xs text-popover-foreground shadow">
+      <div className="flex items-center gap-2">
+        <span
+          className="inline-block h-2 w-2 rounded-full"
+          style={{ background: entry?.color || entry?.payload?.fill || '#bbb' }}
+        />
+        <span className="font-medium">{name}</span>
+        <span className="opacity-70">— {value}</span>
+      </div>
+    </div>
+  );
+};
 
 export default function DescXQtdPieChart() {
-  const registros = useCSV();
-  const [entradas, setEntradas] = useState<any[]>([]);
-  const [saidas, setSaidas] = useState<any[]>([]);
+  const { registros } = useCSV();
+  const [entradas, setEntradas] = useState<PieData[]>([]);
+  const [saidas, setSaidas] = useState<PieData[]>([]);
   const [semana, setSemana] = useState<number | null>(null);
   const [ano, setAno] = useState<number | null>(null);
-  const { theme } = useTheme();
+ 
 
   useEffect(() => {
     async function carregarDados() {
@@ -55,11 +97,11 @@ export default function DescXQtdPieChart() {
     carregarDados();
   }, [registros]);
 
-  let titulo = "Movimentação Itens na Oficina";
+  let titulo = "Repair Shop Items In and Items Out";
   if (semana && ano) {
     const semanaAtual = getISOWeek(new Date());
     if (semana === semanaAtual) {
-      titulo += ` — Semana ${semana} de ${ano} (última semana com dados)`;
+      titulo += ` — Week ${semana} of ${ano} (Last week with data)`;
     }
   } else {
     titulo += " — Sem dados anteriores";
@@ -68,55 +110,92 @@ export default function DescXQtdPieChart() {
   const temEntradas = entradas.some((e) => e.value > 0);
   const temSaidas = saidas.some((s) => s.value > 0);
 
-  const cores = ["#0ea5e9", "#f97316", "#22c55e", "#a855f7", "#ef4444", "#14b8a6"];
-
- const renderDonut = (data: any[], titulo: string) => {
-  const total = data.reduce((acc, curr) => acc + curr.value, 0);
-  return (
-    <div className="flex flex-col items-center">
-      <ResponsiveContainer width="100%" height={250}>
-        <ChartContainer config={{}} className="min-h-[250px] w-full">
-          <PieChart>
-            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Pie
-              data={data}
-              dataKey="value"
-              nameKey="name"
-              innerRadius={60}
-              strokeWidth={5}
-            >
-              {data.map((_, i) => (
-                <Cell key={i} fill={cores[i % cores.length]} />
-              ))}
-              {/* Label central: só o número */}
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        className="fill-foreground text-3xl font-bold"
-                      >
-                        {total}
-                      </text>
-                    );
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
-      </ResponsiveContainer>
-      {/* Texto fora do donut */}
-      <span className="mt-2 text-sm text-muted-foreground font-medium">
-        {titulo}
-      </span>
-    </div>
+  // 🔑 gera mapa de cores global (entradas + saídas)
+  const descricoesUnicas = Array.from(
+    new Set([...entradas, ...saidas].map(d => d.name))
   );
-};
+  const colorMap: Record<string, string> = {};
+  descricoesUnicas.forEach((desc) => {
+    colorMap[desc] = colorFor(desc);
+  });
+
+  
+const renderDonut = (
+  data: PieData[],
+  titulo: string,
+  colorMap: Record<string, string>
+) => {
+  const dataFiltrada = (data || [])
+    .map((d) => ({
+      ...d,
+      value: saneNumber(d.value),
+      name: typeof d.name === 'string' ? d.name.trim() : '',
+    }))
+    .filter((d) => d.value > 0 && d.name);
+
+  const total = dataFiltrada.reduce((acc, curr) => acc + curr.value, 0);
+
+
+    return (
+      <div className="flex flex-col items-center">
+        <ResponsiveContainer width="100%" height={250}>
+          <ChartContainer config={{}} className="min-h-[250px] w-full overflow-visible">
+            <PieChart>
+              <ChartTooltip cursor={false} content={<CustomTooltip />} />
+              <Pie
+                data={dataFiltrada}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={60}
+                strokeWidth={5}
+                minAngle={4}
+                paddingAngle={1}
+                labelLine={true}
+              >
+                {dataFiltrada.map((d, i) => (
+                  <Cell key={i} fill={colorMap[d.name]} />
+                ))}
+                <LabelList
+                  dataKey="name"
+                  position="outside"
+                  style={{
+                    fill: 'currentColor',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    paintOrder: 'stroke',
+                    stroke: 'rgba(0,0,0,0.15)',
+                    strokeWidth: 1,
+                  }}
+                />
+                <Label
+                  content={({ viewBox }) => {
+                    if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+                      return (
+                        <text
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="fill-foreground text-3xl font-bold"
+                        >
+                          {total}
+                        </text>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+        </ResponsiveContainer>
+
+        <span className="mt-2 text-sm text-muted-foreground font-medium">
+          {titulo}
+        </span>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full justify-evenly">
@@ -124,11 +203,13 @@ export default function DescXQtdPieChart() {
       <div className={`flex-1 w-full flex ${temEntradas && temSaidas ? "flex-row" : "justify-evenly"}`}>
         {temEntradas && temSaidas ? (
           <>
-            <div className="w-1/2">{renderDonut(entradas, "Entradas")}</div>
-            <div className="w-1/2">{renderDonut(saidas, "Saídas")}</div>
+            <div className="w-1/2">{renderDonut(entradas, "Entradas", colorMap)}</div>
+            <div className="w-1/2">{renderDonut(saidas, "Saídas", colorMap)}</div>
           </>
         ) : (
-          <div className="w-2/3">{renderDonut(temEntradas ? entradas : saidas, temEntradas ? "Entradas" : "Saídas")}</div>
+          <div className="w-2/3">
+            {renderDonut(temEntradas ? entradas : saidas, temEntradas ? "Entradas" : "Saídas", colorMap)}
+          </div>
         )}
       </div>
     </div>

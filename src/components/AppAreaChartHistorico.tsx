@@ -9,18 +9,46 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  ReferenceLine,
 } from "recharts";
 import { useCSV } from "@/lib/useCSV";
 import { useTheme } from "next-themes";
-import { calcularSegvooMensalTotal } from "@/lib/filtroHistoricoSegVoo"; // ✅ agora importa a função nova
+import { calcularSegvooMensalTotal } from "@/lib/filtroHistoricoSegVoo";
+import {
+  calcularMediaMensal,
+  calcularVariacaoPercentual,
+  gerarLegendaComVariação,
+} from "@/lib/estatisticaSegVoo";
+
+// ✅ Interface para os dados mensais
+
+interface DadoMensal {
+  mes: string;
+  ano?: string | number;
+  atual: number | null;
+  anterior: number | null;
+}
+
+interface RegistroSegVoo {
+  SegVoo: string;
+}
+
+
+// ✅ Tipo para o retorno da função calcularSegvooMensalTotal
+type ResultadoSegVoo =
+  | DadoMensal[]
+  | {
+      dados: DadoMensal[];
+      picoHistorico: number;
+    };
 
 export default function AppAreaChartHistorico() {
-  const registros = useCSV();
+  const { registros } = useCSV();
   const [dataRef, setDataRef] = useState<Date>(new Date());
-  const [dados, setDados] = useState<any[]>([]);
+  const [dados, setDados] = useState<DadoMensal[]>([]);
+  const [picoHistorico, setPicoHistorico] = useState<number>(0);
   const { theme } = useTheme();
 
-  // busca a data simulada
   useEffect(() => {
     async function buscarDataSimulada() {
       try {
@@ -35,51 +63,125 @@ export default function AppAreaChartHistorico() {
     buscarDataSimulada();
   }, []);
 
-  // recalcula os dados sempre que registros ou dataRef mudarem
-  useEffect(() => {
-    if (registros.length > 0 && dataRef) {
-      const resultado = calcularSegvooMensalTotal(registros, dataRef);
-      setDados(resultado);
-    }
-  }, [registros, dataRef]);
+  
+useEffect(() => {
+  const registrosConvertidos: RegistroSegVoo[] = registros
+    .map((r) => {
+      const segvoo = r["SegVoo"];
+      return typeof segvoo === "string" ? { SegVoo: segvoo } : null;
+    })
+    .filter((r): r is RegistroSegVoo => r !== null);
+
+  const resultado: ResultadoSegVoo = calcularSegvooMensalTotal(registrosConvertidos, dataRef);
+
+  if (Array.isArray(resultado)) {
+    setDados(resultado);
+    const maxVal = Math.max(
+      ...resultado.map((r: DadoMensal) => Math.max(r.atual ?? 0, r.anterior ?? 0))
+    );
+    setPicoHistorico(maxVal);
+  } else if (resultado && Array.isArray(resultado.dados)) {
+    setDados(resultado.dados);
+    setPicoHistorico(resultado.picoHistorico ?? 0);
+  } else {
+    setDados([]);
+    setPicoHistorico(0);
+  }
+}, [registros, dataRef]);
+
 
   const labelColor = theme === "dark" ? "#fff" : "#000";
 
+  const { mediaAtual, mediaAnterior } = calcularMediaMensal(dados);
+  const variacao = calcularVariacaoPercentual(mediaAtual, mediaAnterior);
+
+  const anoAtual = dados.find((r) => r.atual !== null)?.ano ?? "Atual";
+  const anoAnterior = dados.find((r) => r.anterior !== null)?.ano ?? "Anterior";
+
+  const legendaAtual = gerarLegendaComVariação(String(anoAtual), variacao);
+
   return (
-    <div className="w-full h-[400px]">
+    <div className="w-full h-auto">
       <h3 className="text-lg font-semibold mb-2">
-        Histórico de SEGVOO — Últimos 12 Meses
+        Return to service Certificates issued - last 12 months
       </h3>
-      <div className="w-full h-[460px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={dados} margin={{ bottom: 10 }}>
+
+      <div className="w-full h-[450px]">
+        <ResponsiveContainer width="100%" height={450}>
+          <AreaChart data={dados} margin={{ left: 0, right: 20, bottom: 10 }}>
             <defs>
-              <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#facc15" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#92400e" stopOpacity={0.2}/>
+              <linearGradient id="colorAtual" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#facc15" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="#92400e" stopOpacity={0.2} />
               </linearGradient>
             </defs>
+
             <XAxis
               dataKey="mes"
               interval={0}
-              tick={{ fontSize: 14, fontWeight: "bold", fill: labelColor }}
+              tick={{ fontSize: 14, fill: labelColor }}
               axisLine={{ stroke: labelColor, strokeWidth: 2 }}
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
-              angle={-30}
-              textAnchor="end"
             />
             <YAxis
-              tick={{ fontSize: 14, fontWeight: "bold", fill: labelColor }}
+              orientation="left"
+              tickFormatter={(value) => Number(value).toLocaleString("pt-BR")}
+              tick={{ fontSize: 14, fill: labelColor }}
               axisLine={{ stroke: labelColor, strokeWidth: 2 }}
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
+              allowDecimals={false}
+              domain={[
+                0,
+                (dataMax: number) => Math.ceil(Math.max(dataMax, picoHistorico) * 1.1)
+              ]}
             />
-            <Tooltip />
-            
+            <Tooltip
+              contentStyle={{
+                backgroundColor: theme === "dark" ? "#1f2937" : "#f9fafb",
+                border: "1px solid #d1d5db",
+                borderRadius: "6px",
+                color: theme === "dark" ? "#ffffff" : "#111827",
+              }}
+              labelStyle={{
+                color: theme === "dark" ? "#ffffff" : "#111827",
+              }}
+            />
+            <Legend />
+
+            {/* 🔑 Linha do pico histórico */}
+            {picoHistorico > 0 && Number.isFinite(picoHistorico) && (
+              <ReferenceLine
+                y={picoHistorico}
+                stroke="green"
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                label={{
+                  value: `All the time releases count (${picoHistorico})`,
+                  position: "top",
+                  offset: 8,
+                  fill: "lightgreen",
+                  fontSize: 12,
+                  fontWeight: "bold",
+                }}
+              />
+            )}
+
             <Area
               type="monotone"
-              dataKey="total"
-              stroke="#0ea5e9"
-              fill="url(#colorTotal)"   // ✅ aplica o degradê
+              dataKey="anterior"
+              stroke="#9ca3af"
+              strokeDasharray="4 4"
+              strokeWidth={3}
+              fillOpacity={0}
+              name={String(anoAnterior)}
+            />
+            <Area
+              type="monotone"
+              dataKey="atual"
+              stroke="#facc15"
+              strokeWidth={2}
+              fill="url(#colorAtual)"
+              name={legendaAtual}
             />
           </AreaChart>
         </ResponsiveContainer>

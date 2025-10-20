@@ -1,6 +1,10 @@
 import { subMonths, format } from "date-fns";
 import { enUS } from "date-fns/locale";
 
+interface RegistroSegVoo {
+  SegVoo: string;
+}
+
 function parseData(raw: string): Date | null {
   if (!raw) return null;
   const partes = raw.split("-");
@@ -22,26 +26,45 @@ function parseData(raw: string): Date | null {
   return isNaN(data.getTime()) ? null : data;
 }
 
-export function calcularSegvooMensalTotal(registros: any[], dataRef: Date) {
+export function calcularSegvooMensalTotal(registros: RegistroSegVoo[], dataRef: Date) {
   const inicio = subMonths(dataRef, 12);
-  const meses: Date[] = [];
+  const inicioAnterior = subMonths(dataRef, 24);
+  const fimAnterior = subMonths(dataRef, 12);
+
+  const meses: string[] = [];
   for (let i = 11; i >= 0; i--) {
-    meses.push(subMonths(dataRef, i));
+    const m = subMonths(dataRef, i);
+    meses.push(format(m, "MMM", { locale: enUS }));
   }
 
-  const agrupados: Record<string, number> = {};
+  const atual: Record<string, number> = {};
+  const anterior: Record<string, number> = {};
 
   registros.forEach((reg) => {
     const dataSegvoo = parseData(reg["SegVoo"]);
-    if (dataSegvoo && dataSegvoo >= inicio && dataSegvoo <= dataRef) {
-      const chave = format(dataSegvoo, "MMM/yy", { locale: enUS });
-      if (!agrupados[chave]) agrupados[chave] = 0;
-      agrupados[chave]++; // soma 1 ocorrência, independente da descrição
+    if (!dataSegvoo) return;
+
+    const mes = format(dataSegvoo, "MMM", { locale: enUS });
+
+    if (dataSegvoo >= inicio && dataSegvoo <= dataRef) {
+      atual[mes] = (atual[mes] || 0) + 1;
+    }
+
+    if (dataSegvoo >= inicioAnterior && dataSegvoo <= fimAnterior) {
+      anterior[mes] = (anterior[mes] || 0) + 1;
     }
   });
 
-  return meses.map((m) => {
-    const chave = format(m, "MMM/yy", { locale: enUS });
-    return { mes: chave, total: agrupados[chave] || 0 };
-  });
+  const dados = meses.map((mes) => ({
+    mes,
+    atual: atual[mes] || 0,
+    anterior: anterior[mes] || 0,
+  }));
+
+  return {
+    dados,
+    picoHistorico: Math.max(...dados.map(d => Math.max(d.atual, d.anterior)))
+  };
 }
+
+export { parseData };

@@ -1,15 +1,14 @@
 import AppAreaChartHistorico from "@/components/AppAreaChartHistorico";
-import AppPieChart from "@/components/AppPieChart";
-import DescXQtdBarChart from "@/components/descxqtdBarChart";
 import DescXQtdPieChart from "@/components/descxqtdPieChart";
 import TatMensalChart from "@/components/TatMensalChart";
 
 
-
-
 import WeekNum from "@/components/weekNum";
+import DescReasonsByDescricaoCard from "@/components/card/DescRankCard";
 
 export default function Homepage() {
+  
+
   return (
     <div className="flex flex-col gap-4 h-screen p-4">
 
@@ -23,9 +22,22 @@ export default function Homepage() {
           <DescXQtdPieChart />
         </div>
 
-        <div className="bg-primary-foreground p-4 rounded-lg flex items-center justify-center">
-          <AppPieChart />
+        
+        
+        
+        <div className="p-0 rounded-lg">
+          <DescReasonsByDescricaoCard
+            title="Top 3 - Removal Reasons"
+            intervalMs={3500}
+            // Cenário geral: todas as falhas (excluindo NFF/UNSPECIFIED por padrão)
+            // Se quiser focar, por exemplo:
+            // include={['BLACK SCREEN','INOPERATIVE / NOT WORKING']}
+            // topReasonsPerDescricao={3}
+          />
+
         </div>
+
+
       </div>
 
       {/* Linha inferior: 2 colunas iguais */}
