@@ -112,12 +112,13 @@ export default function DescXQtdPieChart() {
 
   // 🔑 gera mapa de cores global (entradas + saídas)
   const descricoesUnicas = Array.from(
-    new Set([...entradas, ...saidas].map(d => d.name))
-  );
-  const colorMap: Record<string, string> = {};
-  descricoesUnicas.forEach((desc) => {
-    colorMap[desc] = colorFor(desc);
-  });
+  new Set([...entradas, ...saidas].map(d => d.name.trim().toLowerCase()))
+);
+
+const colorMap: Record<string, string> = {};
+descricoesUnicas.forEach((desc) => {
+  colorMap[desc] = colorFor(desc);
+});
 
   
 const renderDonut = (
@@ -153,7 +154,7 @@ const renderDonut = (
                 labelLine={true}
               >
                 {dataFiltrada.map((d, i) => (
-                  <Cell key={i} fill={colorMap[d.name]} />
+                  <Cell key={i} fill={colorMap[d.name.trim().toLowerCase()]} />
                 ))}
                 <LabelList
                   dataKey="name"
