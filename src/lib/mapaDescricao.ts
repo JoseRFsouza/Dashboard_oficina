@@ -1,5 +1,3 @@
-// src/lib/mapaDescricao.ts
-
 const coresBase = [
   "#0ea5e9", // azul
   "#f97316", // laranja
@@ -22,7 +20,10 @@ export function gerarMapaDescricao(registros: RegistroDescricao[]): Record<strin
 
   registros.forEach((reg) => {
     const raw = reg["Descrição"] || reg["Descri��o"];
-    if (raw) descricoesSet.add(raw.trim());
+    const descricao = raw?.trim().toLowerCase(); // normaliza
+    if (descricao) {
+      descricoesSet.add(descricao); // ignora vazios e duplicados
+    }
   });
 
   const descricoesOrdenadas = Array.from(descricoesSet).sort((a, b) =>
@@ -31,7 +32,7 @@ export function gerarMapaDescricao(registros: RegistroDescricao[]): Record<strin
 
   const mapa: Record<string, string> = {};
   descricoesOrdenadas.forEach((desc, i) => {
-    mapa[desc] = coresBase[i % coresBase.length];
+    mapa[desc] = coresBase[i % coresBase.length]; // até 10 cores únicas
   });
 
   return mapa;
