@@ -65,7 +65,8 @@ export default function TatMensalChart() {
               textAnchor="end"
             />
             <YAxis
-              domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.1)]}
+              domain={[    0,
+               (dataMax: number) => Math.ceil(Math.max(dataMax * 1.1, 33))]}
               axisLine={{ stroke: labelColor, strokeWidth: 2 }}
               tickLine={{ stroke: labelColor, strokeWidth: 1 }}
               tick={(props) => {
