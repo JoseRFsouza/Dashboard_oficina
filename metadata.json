@@ -1,0 +1,6 @@
+{
+  "name": "Dashboard Oficina",
+  "description": "Dashboard de monitoramento e análise de componentes, TAT mensal e histórico de falhas da oficina.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

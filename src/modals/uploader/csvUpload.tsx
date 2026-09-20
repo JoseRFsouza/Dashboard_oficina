@@ -27,23 +27,23 @@ export default function CsvUploadDialog({ onReset }: CsvUploadDialogProps) {
       <Dialog.Trigger asChild>
         <button
           onClick={handleTriggerClick}
-          className="flex items-center gap-2 px-3 py-2 rounded-md border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border/80 bg-background text-foreground hover:bg-secondary hover:text-foreground transition-colors shadow-2xs"
         >
-          <Upload className="w-4 h-4" />
+          <Upload className="w-3.5 h-3.5 text-sky-500" />
           <span>Upload CSV</span>
         </button>
       </Dialog.Trigger>
 
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
+        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 animate-in fade-in-0" />
         <Dialog.Content className="fixed inset-0 z-50 overflow-auto p-4 flex items-start sm:items-center justify-center">
-          <div className="w-full max-w-4xl bg-white dark:bg-slate-900 rounded-lg shadow-lg relative">
+          <div className="w-full max-w-4xl bg-card border border-border text-card-foreground rounded-2xl shadow-xl relative overflow-hidden">
             <Dialog.Title className="sr-only">CSV Upload</Dialog.Title>
 
             <CsvWithPersistence onClose={() => setOpen(false)} />
 
             <Dialog.Close asChild>
-              <button className="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
+              <button className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-secondary transition-colors">
                 ✕
               </button>
             </Dialog.Close>

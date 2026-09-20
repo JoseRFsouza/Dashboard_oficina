@@ -1,29 +1,60 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 
 export async function GET() {
-  const cookieStore = cookies() as unknown as ReadonlyRequestCookies;
-  const data = cookieStore.get("dataSimulada")?.value;
+  try {
+    const cookieStore = await cookies();
+    const data = cookieStore.get("dataSimulada")?.value;
 
-  return NextResponse.json({
-    dataSimulada: data ? new Date(data) : new Date(),
-  });
+    let validDate = new Date();
+    if (data) {
+      const parsed = new Date(data);
+      if (!isNaN(parsed.getTime())) {
+        validDate = parsed;
+      }
+    }
+
+    return NextResponse.json(
+      {
+        dataSimulada: validDate.toISOString(),
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
+    );
+  } catch {
+    return NextResponse.json(
+      {
+        dataSimulada: new Date().toISOString(),
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
+    );
+  }
 }
 
 export async function POST(req: Request) {
-  const { dataSimulada } = await req.json();
+  try {
+    const body = await req.json().catch(() => ({}));
+    const valor = body?.dataSimulada || new Date().toISOString().split("T")[0];
 
-  const valor = dataSimulada || new Date().toISOString().split("T")[0];
+    const res = NextResponse.json({ ok: true, dataSimulada: valor });
 
-  const res = NextResponse.json({ ok: true, dataSimulada: valor });
+    // grava cookie válido por 7 dias
+    res.cookies.set("dataSimulada", valor, {
+      path: "/",
+      httpOnly: false,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+    });
 
-  // grava cookie válido por 7 dias
-  res.cookies.set("dataSimulada", valor, {
-    path: "/",
-    httpOnly: false, // se quiser ler no client também
-    maxAge: 60 * 60 * 24 * 7,
-  });
-
-  return res;
+    return res;
+  } catch {
+    return NextResponse.json({ ok: false, error: "Falha ao salvar data" }, { status: 400 });
+  }
 }
